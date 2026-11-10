@@ -1,0 +1,118 @@
+name: Publish verified Windows release
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-release.yml']
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Windows installer workflow run ID
+        required: true
+        default: '42857435522'
+      version:
+        description: Version without the v prefix
+        required: true
+        default: '0.1.0'
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RABASS_RUN_ID: ${{ inputs.run_id || '42857435522' }}
+      RABASS_VERSION: ${{ inputs.version || '0.1.0' }}
+    steps:
+      - name: Verify successful build provenance
+        id: verified
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, re
+          assert re.fullmatch(r'[0-9]+', os.environ['RABASS_RUN_ID'])
+          assert re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', os.environ['RABASS_VERSION'])
+          PY
+          gh api "repos/$GH_REPO/actions/runs/$RABASS_RUN_ID" > run.json
+          python3 - <<'PY'
+          import json, os
+          run = json.load(open('run.json'))
+          assert run['status'] == 'completed' and run['conclusion'] == 'success'
+          assert run['head_branch'] == 'main'
+          assert run['event'] in ('push', 'workflow_dispatch')
+          assert run['path'] == '.github/workflows/windows-installer.yml'
+          assert run['repository']['full_name'] == os.environ['GH_REPO']
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write('sha=' + run['head_sha'] + '\n')
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          name: RaBASS-Windows-x64
+          path: artifacts
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.run_id || '42857435522' }}
+      - name: Verify package and prepare portable VST3
+        env:
+          VERIFIED_SHA: ${{ steps.verified.outputs.sha }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, os, re, struct, zipfile
+          version = os.environ['RABASS_VERSION']
+          root = Path('artifacts')
+          installer = root/'build/installer'/f'RaBASS-{version}-Windows-x64-Setup.exe'
+          assert hashlib.sha256(installer.read_bytes()).hexdigest() == Path(str(installer)+'.sha256').read_text().split()[0]
+          with zipfile.ZipFile(root/'build/installer/RaBASS-Source.zip') as z:
+              assert z.comment.decode() == os.environ['VERIFIED_SHA']
+              assert re.search(r'project\(RaBASS VERSION '+re.escape(version)+r' LANGUAGES', z.read('CMakeLists.txt').decode())
+          module = root/'build/windows-x64/RaBASS_artefacts/Release/VST3/RaBASS.vst3/Contents/x86_64-win/RaBASS.vst3'
+          data = module.read_bytes()
+          pe = struct.unpack_from('<I', data, 0x3c)[0]
+          assert data[pe:pe+4] == b'PE\0\0' and struct.unpack_from('<H', data, pe+4)[0] == 0x8664
+          bundle = module.parents[2]
+          with zipfile.ZipFile(f'RaBASS-{version}-Windows-x64-VST3.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for file in bundle.rglob('*'):
+                  if file.is_file(): z.write(file, file.relative_to(bundle.parent))
+          PY
+      - name: Publish complete release
+        env:
+          VERIFIED_SHA: ${{ steps.verified.outputs.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="v$RABASS_VERSION"
+          cat > notes.md <<EOF
+          RaBASS $RABASS_VERSION je analogni bass instrument u VST3 formatu za Windows 10/11 x64.
+
+          Preuzmite **RaBASS-$RABASS_VERSION-Windows-x64-Setup.exe**, zatvorite Ableton Live i pokrenite instaler. U Liveu 12 uključite **Settings → Plug-Ins → Use VST3 Plug-In System Folders**, kliknite **Rescan** i dodajte RaBASS na MIDI traku.
+
+          Dva oscilatora, sinusni sub, rezonantni low-pass filter, filter envelope, amplitude ADSR i drive. Mono legato/glide ili osam glasova, šest preseta, MIDI velocity, pitch bend i sustain pedal. Automatizacija svih parametara i spremanje stanja u DAW projektu.
+
+          CMake projekt i skripte za Visual Studio 2026 uključeni su u izvor. Na odredišnom računalu nisu potrebni razvojni alati ni dodatni runtime download.
+
+          Provjereni su Windows build, DSP/processor testovi, instalacija, nadogradnja i deinstalacija: https://github.com/$GH_REPO/actions/runs/$RABASS_RUN_ID
+
+          Lokalni VST3 bundle prošao je pluginval 1.0.4 na razini 5. Stvarni Ableton Live 12 i lokalni VS 2026 trebaju završnu provjeru na korisnikovom Windows računalu. Instaler je nepotpisan.
+
+          Izvorni RaBASS kod: CC0-1.0. Kombinirani JUCE plugin: JUCE-ova AGPLv3 opcija i pripadajuće licence. Obje izvorne arhive i licence priložene su uz instalaciju.
+          EOF
+          if gh release view "$tag" --json isDraft > existing-release.json 2>/dev/null; then
+            python3 - <<'PY'
+          import json
+          assert json.load(open('existing-release.json'))['isDraft'], 'Release already published; refusing to replace its assets.'
+          PY
+          else
+            gh release create "$tag" --draft --target "$VERIFIED_SHA" --title "RaBASS $RABASS_VERSION — Windows VST3 Bass Instrument" --notes-file notes.md
+          fi
+          gh release upload "$tag" \
+            "artifacts/build/installer/RaBASS-$RABASS_VERSION-Windows-x64-Setup.exe" \
+            "artifacts/build/installer/RaBASS-$RABASS_VERSION-Windows-x64-Setup.exe.sha256" \
+            "RaBASS-$RABASS_VERSION-Windows-x64-VST3.zip" \
+            artifacts/build/installer/RaBASS-Source.zip \
+            artifacts/build/installer/JUCE-8.0.6-Source.zip \
+            artifacts/RaBASS-editor.png --clobber
+          gh release edit "$tag" --draft=false --notes-file notes.md --latest
