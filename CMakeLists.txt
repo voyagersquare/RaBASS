@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(RaBASS VERSION 0.3.5 LANGUAGES C CXX)
+project(RaBASS VERSION 0.3.6 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(RABASS_DSP_ONLY "Build portable DSP tests without JUCE" OFF)
@@ -25,7 +25,7 @@ FetchContent_MakeAvailable(JUCE)
 juce_add_binary_data(RaBASSArtwork
     HEADER_NAME RaBASSArtwork.h
     NAMESPACE RaBASSArtwork
-    SOURCES Assets/RaBassLogo.png)
+    SOURCES Assets/RaBassLogo.png Assets/SavePresetIcon.svg)
 set_target_properties(RaBASSArtwork PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 juce_add_plugin(RaBASS
     COMPANY_NAME "Independent Audio"

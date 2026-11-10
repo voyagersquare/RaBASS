@@ -73,6 +73,7 @@ void configureReadout(juce::Slider& slider)
 
 BassLookAndFeel::BassLookAndFeel()
 {
+    saveIcon=juce::Drawable::createFromImageData(RaBASSArtwork::SavePresetIcon_svg,RaBASSArtwork::SavePresetIcon_svgSize);
     setColour(juce::ComboBox::backgroundColourId,well);
     setColour(juce::ComboBox::textColourId,ink);
     setColour(juce::ComboBox::outlineColourId,edge);
@@ -208,6 +209,12 @@ void BassLookAndFeel::drawButtonBackground(juce::Graphics& g,juce::Button& butto
 }
 void BassLookAndFeel::drawButtonText(juce::Graphics& g,juce::TextButton& button,bool,bool down)
 {
+    if (button.getComponentID()=="savePreset" && saveIcon!=nullptr)
+    {
+        const auto iconBounds=button.getLocalBounds().toFloat().withSizeKeepingCentre(26,26).translated(0,down ? 0.0f : -2.0f);
+        saveIcon->drawWithin(g,iconBounds,juce::RectanglePlacement::centred,button.isEnabled() ? 1.0f : .45f);
+        return;
+    }
     g.setFont(juce::FontOptions(button.getWidth()>60 ? 12.0f : 14.0f,juce::Font::bold));
     auto textBounds=button.getLocalBounds().reduced(6,5).translated(0,down ? 0 : -2);
     // A dark face legend stays legible over the bright chrome reflections.
@@ -330,6 +337,7 @@ RaBASSEditor::RaBASSEditor(RaBASSProcessor& p)
     previousPreset.onClick=[this] { navigatePreset(-1); };
     nextPreset.onClick=[this] { navigatePreset(1); };
     savePreset.setName("SAVE PRESET"); savePreset.onClick=[this] { beginSavePreset(); };
+    savePreset.setComponentID("savePreset"); savePreset.setTitle("Save user preset"); savePreset.setTooltip("Save user preset");
     for (auto* button : {&panic,&previousPreset,&nextPreset,&savePreset})
     { button->setWantsKeyboardFocus(false); addAndMakeVisible(button); }
     startTimerHz(24);
@@ -358,7 +366,7 @@ void RaBASSEditor::paint(juce::Graphics& g)
     g.setFont(juce::FontOptions(11.0f,juce::Font::bold)); g.setColour(muted);
     g.drawText("SUBTRACTIVE BASS SYNTH",248,25,330,18,juce::Justification::centredLeft);
     g.setColour(amber); g.setFont(juce::FontOptions(10.0f));
-    g.drawText("UI PREVIEW 06  /  v" JucePlugin_VersionString,248,49,330,18,juce::Justification::centredLeft);
+    g.drawText("UI PREVIEW 07  /  v" JucePlugin_VersionString,248,49,330,18,juce::Justification::centredLeft);
     drawPanel(g,{28,104,636,234},"BASS GENERATOR");
     drawPanel(g,{680,104,260,454},"FILTER MODULE");
     drawPanel(g,{956,104,156,454},"OUTPUT MODULE");
@@ -382,7 +390,7 @@ void RaBASSEditor::paint(juce::Graphics& g)
     g.setColour(muted); g.setFont(juce::FontOptions(9.0f));
     g.drawText("OUTPUT LEVEL",978,532,112,14,juce::Justification::centred);
     g.drawText("INDEPENDENT AUDIO",52,735,330,16,juce::Justification::centredLeft);
-    g.drawText("RaBASS  /  UI PREVIEW 06",780,735,308,16,juce::Justification::centredRight);
+    g.drawText("RaBASS  /  UI PREVIEW 07",780,735,308,16,juce::Justification::centredRight);
     drawScrew(g,22,24,.5f); drawScrew(g,1118,24,-.4f); drawScrew(g,22,736,-.35f); drawScrew(g,1118,736,.6f);
 }
 void RaBASSEditor::resized()
@@ -404,7 +412,7 @@ void RaBASSEditor::resized()
     for (size_t i=0;i<envelope.size();++i) dial(envelope[i],44+static_cast<int>(i)*122,404,112,120);
     dial(13,978,154,112,126); dial(11,978,338,112,126);
     modeLabel.setBounds(736,20,190,18); mode.setBounds(736,43,190,28); panic.setBounds(978,40,104,34);
-    presets.setBounds(50,602,410,28); savePreset.setBounds(470,600,104,34);
-    previousPreset.setBounds(592,600,30,34); nextPreset.setBounds(636,600,30,34);
+    presets.setBounds(50,602,410,28); savePreset.setBounds(470,598,44,40);
+    previousPreset.setBounds(526,600,30,34); nextPreset.setBounds(570,600,30,34);
     keyboard.setBounds(52,656,1036,70);
 }

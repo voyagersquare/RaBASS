@@ -1,4 +1,4 @@
-# RaBASS 0.3.5 — UI Preview 06: Script Logo
+# RaBASS 0.3.6 — UI Preview 07: Floppy Save Icon
 
 **Subtractive synthesis bass synth** za Windows 10/11 x64, u **VST3** formatu.
 CMake projekt za Visual Studio 2026 i MIDI trake u Ableton Liveu 12.
@@ -15,7 +15,8 @@ u svijetloj boji na tamnocrvenoj podlozi. Logotip je ugrađen u plugin pa
 ne zahtijeva instalaciju dodatnog fonta.
 Oscilatori, filter, envelope, output i preseti imaju zaseban prostor.
 Izbornik preseta ima odjeljke **Factory presets** i **User presets**,
-tipku **SAVE PRESET** te tipke za prethodni/sljedeći preset.
+kompaktnu kromiranu tipku s **ikonom diskete** za spremanje te tipke za
+prethodni/sljedeći preset. Ikona je vektorska i ugrađena u plugin.
 DSP engine i izvornih šest tvorničkih zvukova nisu mijenjani.
 Prethodna [stabilna verzija 0.2.0](https://github.com/voyagersquare/RaBASS/releases/tag/v0.2.0)
 ostaje dostupna dok isprobavamo novi izgled.
@@ -66,8 +67,8 @@ Lijevi i desni kanal identični su radi centriranog basa.
 
 ## Preuzimanje i Ableton Live 12
 
-Preuzmite `RaBASS-0.3.5-Windows-x64-VST3.zip` iz
-[Script Logo Preview izdanja](https://github.com/voyagersquare/RaBASS/releases/tag/v0.3.5-ui-preview.6).
+Preuzmite `RaBASS-0.3.6-Windows-x64-VST3.zip` iz
+[Floppy Save Icon Preview izdanja](https://github.com/voyagersquare/RaBASS/releases/tag/v0.3.6-ui-preview.7).
 Paket je dostupan i u **Actions → Windows VST3 → uspješan run → Artifacts**.
 Releases uključuje izvor RaBASS-a, odgovarajući JUCE source i `SHA256SUMS.txt`.
 
@@ -84,7 +85,7 @@ Na odredišnom računalu nisu potrebni Visual Studio ni dodatni runtime download
 
 ## User presets i novi bass zvukovi
 
-1. Podesite zvuk i kliknite **SAVE PRESET** uz padajući izbornik.
+1. Podesite zvuk i kliknite **ikonu diskete** uz padajući izbornik.
 2. Unesite naziv i kliknite **Save**. Spremljeni zvuk odabire se u izborniku.
 3. U padajućem izborniku otvorite **User presets** i odaberite svoj zvuk.
 

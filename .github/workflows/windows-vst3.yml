@@ -103,13 +103,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tag="v$RABASS_VERSION-ui-preview.6"
+          tag="v$RABASS_VERSION-ui-preview.7"
           cat > notes.md <<EOF
-          RaBASS $RABASS_VERSION — Script Logo UI Preview 06 for Windows x64 / VST3.
+          RaBASS $RABASS_VERSION — Floppy Save Icon UI Preview 07 for Windows x64 / VST3.
 
-          The RaBass header now uses flowing brush-script lettering inspired by the supplied alphabet reference, rendered in warm ivory over the dark red panel. The artwork is embedded in the plugin; no font installation is required.
+          The Save Preset text button is now a compact chrome button with a floppy-disk icon inspired by the supplied reference. The embedded vector icon has a blue-grey body, pale shutter, coral tab and white label. The button retains its Save user preset tooltip, accessible name and existing save dialog.
 
-          The dark red chrome controls, fine cutoff adjustment, existing automation mapping, plugin identity and all 18 factory presets are retained. Editor, cutoff control, state recall and user preset tests are included.
+          The RaBass script logo, dark red chrome controls, fine cutoff adjustment, existing automation mapping and all 18 factory presets are retained. Editor layout, cutoff control, state recall and user preset save-dialog tests are included.
 
           User presets remain in Independent Audio/RaBASS/Presets under Windows AppData/Roaming. Replacing the VST3 bundle keeps that library available.
 
@@ -127,7 +127,7 @@ jobs:
           assert json.load(open('existing.json'))['isDraft'], 'This version is already published; bump the project version for a new release.'
           PY
           else
-            gh release create "$tag" --draft --prerelease --latest=false --target "$GITHUB_SHA" --title "RaBASS $RABASS_VERSION — Script Logo Preview" --notes-file notes.md
+            gh release create "$tag" --draft --prerelease --latest=false --target "$GITHUB_SHA" --title "RaBASS $RABASS_VERSION — Floppy Save Icon Preview" --notes-file notes.md
           fi
           gh release upload "$tag" artifacts/build/packages/* artifacts/RaBASS-editor.png --clobber
           gh release edit "$tag" --draft=false --prerelease --notes-file notes.md --latest=false

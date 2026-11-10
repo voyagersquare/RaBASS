@@ -11,6 +11,8 @@ public:
     void drawButtonBackground(juce::Graphics&,juce::Button&,const juce::Colour&,bool,bool) override;
     void drawButtonText(juce::Graphics&,juce::TextButton&,bool,bool) override;
     juce::Label* createSliderTextBox(juce::Slider&) override;
+private:
+    std::unique_ptr<juce::Drawable> saveIcon;
 };
 class PresetComboBox final : public juce::ComboBox
 {
