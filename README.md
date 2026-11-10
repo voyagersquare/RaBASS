@@ -1,4 +1,4 @@
-# RaBASS 0.3.4 — UI Preview 05: Fine Cutoff
+# RaBASS 0.3.5 — UI Preview 06: Script Logo
 
 **Subtractive synthesis bass synth** za Windows 10/11 x64, u **VST3** formatu.
 CMake projekt za Visual Studio 2026 i MIDI trake u Ableton Liveu 12.
@@ -10,6 +10,9 @@ nešto više tipke. Dimenzije su 1140 × 760. Područja za povlačenje kontrola
 ostaju dovoljno velika za rad mišem.
 Paneli, izbornici, polja s vrijednostima i oznake koriste usklađenu
 tamnocrvenu paletu; kromirane kontrole i njihov reljef ostaju sačuvani.
+Naziv **RaBass** u zaglavlju sada je rukopisni logotip sa spojenim slovima,
+u svijetloj boji na tamnocrvenoj podlozi. Logotip je ugrađen u plugin pa
+ne zahtijeva instalaciju dodatnog fonta.
 Oscilatori, filter, envelope, output i preseti imaju zaseban prostor.
 Izbornik preseta ima odjeljke **Factory presets** i **User presets**,
 tipku **SAVE PRESET** te tipke za prethodni/sljedeći preset.
@@ -63,8 +66,8 @@ Lijevi i desni kanal identični su radi centriranog basa.
 
 ## Preuzimanje i Ableton Live 12
 
-Preuzmite `RaBASS-0.3.4-Windows-x64-VST3.zip` iz
-[Fine Cutoff Preview izdanja](https://github.com/voyagersquare/RaBASS/releases/tag/v0.3.4-ui-preview.5).
+Preuzmite `RaBASS-0.3.5-Windows-x64-VST3.zip` iz
+[Script Logo Preview izdanja](https://github.com/voyagersquare/RaBASS/releases/tag/v0.3.5-ui-preview.6).
 Paket je dostupan i u **Actions → Windows VST3 → uspješan run → Artifacts**.
 Releases uključuje izvor RaBASS-a, odgovarajući JUCE source i `SHA256SUMS.txt`.
 

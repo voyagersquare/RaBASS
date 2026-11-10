@@ -63,7 +63,7 @@ private:
     juce::TextButton previousPreset{"<"}, nextPreset{">"};
     juce::TextButton savePreset{"SAVE PRESET"};
     juce::Component::SafePointer<juce::AlertWindow> presetDialog;
-    juce::Image metalSurface;
+    juce::Image metalSurface, wordmark;
     float displayedPeak=0;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RaBASSEditor)
 };

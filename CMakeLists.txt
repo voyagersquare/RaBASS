@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(RaBASS VERSION 0.3.4 LANGUAGES C CXX)
+project(RaBASS VERSION 0.3.5 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(RABASS_DSP_ONLY "Build portable DSP tests without JUCE" OFF)
@@ -22,6 +22,11 @@ FetchContent_Declare(JUCE
     GIT_TAG 51a8a6d7aeae7326956d747737ccf1575e61e209
     GIT_CONFIG core.longpaths=true)
 FetchContent_MakeAvailable(JUCE)
+juce_add_binary_data(RaBASSArtwork
+    HEADER_NAME RaBASSArtwork.h
+    NAMESPACE RaBASSArtwork
+    SOURCES Assets/RaBassLogo.png)
+set_target_properties(RaBASSArtwork PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 juce_add_plugin(RaBASS
     COMPANY_NAME "Independent Audio"
     BUNDLE_ID "audio.independent.rabass"
@@ -41,7 +46,7 @@ target_sources(RaBASS PRIVATE Source/PluginProcessor.cpp Source/PluginEditor.cpp
 target_compile_definitions(RaBASS PUBLIC
     JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0
     JUCE_DISPLAY_SPLASH_SCREEN=0 JUCE_REPORT_APP_USAGE=0 JUCE_USE_MP3AUDIOFORMAT=0)
-target_link_libraries(RaBASS PRIVATE juce::juce_audio_utils
+target_link_libraries(RaBASS PRIVATE juce::juce_audio_utils RaBASSArtwork
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 if(MSVC)
     target_compile_options(RaBASS PRIVATE /bigobj)

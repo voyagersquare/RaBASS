@@ -1,4 +1,5 @@
 #include "PluginEditor.h"
+#include "RaBASSArtwork.h"
 namespace
 {
 const juce::Colour ink{0xfff9eef0}, muted{0xffdcb9c0}, accent{0xfff2b6a4};
@@ -242,7 +243,9 @@ bool BassSlider::keyPressed(const juce::KeyPress& key)
     return juce::Slider::keyPressed(key);
 }
 RaBASSEditor::RaBASSEditor(RaBASSProcessor& p)
-    : AudioProcessorEditor(p), processor(p), keyboard(p.keyboard,juce::MidiKeyboardComponent::horizontalKeyboard), metalSurface(createMetalSurface())
+    : AudioProcessorEditor(p), processor(p), keyboard(p.keyboard,juce::MidiKeyboardComponent::horizontalKeyboard),
+      metalSurface(createMetalSurface()),
+      wordmark(juce::ImageCache::getFromMemory(RaBASSArtwork::RaBassLogo_png,RaBASSArtwork::RaBassLogo_pngSize))
 {
     setLookAndFeel(&look); setSize(editorWidth,editorHeight); setResizable(false,false);
     const auto setLabel=[this](juce::Label& label,const char* text)
@@ -348,13 +351,14 @@ void RaBASSEditor::paint(juce::Graphics& g)
     g.setColour(juce::Colours::black.withAlpha(.34f)); g.drawRect(getLocalBounds(),2);
     g.setColour(juce::Colours::white.withAlpha(.17f)); g.drawRect(getLocalBounds().reduced(3),1);
     g.setColour(juce::Colours::black.withAlpha(.35f)); g.fillRect(42,12,1056,70);
-    g.setFont(juce::FontOptions(40.0f,juce::Font::bold));
-    g.setColour(juce::Colours::black.withAlpha(.6f)); g.drawText("RaBASS",53,23,185,48,juce::Justification::centredLeft);
-    g.setColour(ink); g.drawText("RaBASS",52,21,185,48,juce::Justification::centredLeft);
+    g.setColour(juce::Colours::black.withAlpha(.6f));
+    g.drawImageWithin(wordmark,53,16,190,64,juce::RectanglePlacement::centred,true);
+    g.setColour(ink);
+    g.drawImageWithin(wordmark,52,14,190,64,juce::RectanglePlacement::centred,true);
     g.setFont(juce::FontOptions(11.0f,juce::Font::bold)); g.setColour(muted);
     g.drawText("SUBTRACTIVE BASS SYNTH",248,25,330,18,juce::Justification::centredLeft);
     g.setColour(amber); g.setFont(juce::FontOptions(10.0f));
-    g.drawText("UI PREVIEW 05  /  v" JucePlugin_VersionString,248,49,330,18,juce::Justification::centredLeft);
+    g.drawText("UI PREVIEW 06  /  v" JucePlugin_VersionString,248,49,330,18,juce::Justification::centredLeft);
     drawPanel(g,{28,104,636,234},"BASS GENERATOR");
     drawPanel(g,{680,104,260,454},"FILTER MODULE");
     drawPanel(g,{956,104,156,454},"OUTPUT MODULE");
@@ -378,7 +382,7 @@ void RaBASSEditor::paint(juce::Graphics& g)
     g.setColour(muted); g.setFont(juce::FontOptions(9.0f));
     g.drawText("OUTPUT LEVEL",978,532,112,14,juce::Justification::centred);
     g.drawText("INDEPENDENT AUDIO",52,735,330,16,juce::Justification::centredLeft);
-    g.drawText("RaBASS  /  UI PREVIEW 05",780,735,308,16,juce::Justification::centredRight);
+    g.drawText("RaBASS  /  UI PREVIEW 06",780,735,308,16,juce::Justification::centredRight);
     drawScrew(g,22,24,.5f); drawScrew(g,1118,24,-.4f); drawScrew(g,22,736,-.35f); drawScrew(g,1118,736,.6f);
 }
 void RaBASSEditor::resized()
