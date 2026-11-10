@@ -102,13 +102,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tag="v$RABASS_VERSION-ui-preview.3"
+          tag="v$RABASS_VERSION-ui-preview.4"
           cat > notes.md <<EOF
-          RaBASS $RABASS_VERSION — Chrome Controls UI Preview 03 for Windows x64 / VST3.
+          RaBASS $RABASS_VERSION — Dark Red Chrome UI Preview 04 for Windows x64 / VST3.
 
-          Smaller knob faces with a taller raised body, stronger directional cast shadows and polished chrome reflections. Slider handles and push buttons share the new chrome finish. Push buttons are narrower and slightly taller; the control spacing and comfortable drag areas are retained.
+          The blue panels are now dark red brushed metal, with matching burgundy menus, readouts and warm light labels. The compact raised chrome controls, stronger cast shadows and current layout are retained.
 
-          The sound engine, all 18 factory presets, Save Preset and the User presets library are unchanged from 0.3.1. This update changes the interface finish. Layout, state recall and user preset tests are included.
+          The sound engine, all 18 factory presets, Save Preset and the User presets library are unchanged. This update changes the interface colours. Layout, state recall and user preset tests are included.
 
           User presets remain in Independent Audio/RaBASS/Presets under Windows AppData/Roaming. Replacing the VST3 bundle keeps that library available.
 
@@ -126,7 +126,7 @@ jobs:
           assert json.load(open('existing.json'))['isDraft'], 'This version is already published; bump the project version for a new release.'
           PY
           else
-            gh release create "$tag" --draft --prerelease --latest=false --target "$GITHUB_SHA" --title "RaBASS $RABASS_VERSION — Chrome Controls Preview" --notes-file notes.md
+            gh release create "$tag" --draft --prerelease --latest=false --target "$GITHUB_SHA" --title "RaBASS $RABASS_VERSION — Dark Red Chrome Preview" --notes-file notes.md
           fi
           gh release upload "$tag" artifacts/build/packages/* artifacts/RaBASS-editor.png --clobber
           gh release edit "$tag" --draft=false --prerelease --notes-file notes.md --latest=false

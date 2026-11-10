@@ -1,8 +1,8 @@
 #include "PluginEditor.h"
 namespace
 {
-const juce::Colour ink{0xffeef5f7}, muted{0xffb6d1de}, accent{0xff85d9ed};
-const juce::Colour well{0xff071c2b}, edge{0xff07283b}, amber{0xfff1c88a};
+const juce::Colour ink{0xfff9eef0}, muted{0xffdcb9c0}, accent{0xfff2b6a4};
+const juce::Colour well{0xff19070c}, edge{0xff28060e}, amber{0xfff1c88a};
 const std::array<const char*,14> labels {"BLEND","DETUNE","SUB","CUTOFF","RESONANCE","ENV AMOUNT","ENV DECAY","ATTACK","DECAY","SUSTAIN","RELEASE","DRIVE","GLIDE","VOLUME"};
 constexpr int editorWidth=1140, editorHeight=760;
 
@@ -20,7 +20,7 @@ juce::Image createMetalSurface()
             const float light=11.0f*std::sin(u*juce::MathConstants<float>::pi)*std::sin(v*juce::MathConstants<float>::pi);
             const float noise=grain+(random.nextFloat()-.5f)*2.0f;
             const auto channel=[](float c) { return static_cast<juce::uint8>(juce::jlimit(0,255,juce::roundToInt(c))); };
-            pixels.setPixelColour(x,y,juce::Colour(channel(9+u*18+light+noise),channel(43+u*54+light+noise),channel(77+u*37+light+noise)));
+            pixels.setPixelColour(x,y,juce::Colour(channel(48+u*65+light+noise),channel(8+u*13+light*.35f+noise*.5f),channel(15+u*24+light*.55f+noise*.65f)));
         }
     }
     return result;
@@ -28,13 +28,13 @@ juce::Image createMetalSurface()
 void drawPanel(juce::Graphics& g,juce::Rectangle<float> bounds,const juce::String& title)
 {
     g.setColour(juce::Colours::black.withAlpha(.27f)); g.fillRoundedRectangle(bounds.translated(1,3),3);
-    g.setGradientFill(juce::ColourGradient(juce::Colour{0xff164962}.withAlpha(.76f),bounds.getTopLeft(),
-        juce::Colour{0xff102e43}.withAlpha(.58f),bounds.getBottomRight(),false));
+    g.setGradientFill(juce::ColourGradient(juce::Colour{0xff6d1c2a}.withAlpha(.76f),bounds.getTopLeft(),
+        juce::Colour{0xff390b17}.withAlpha(.58f),bounds.getBottomRight(),false));
     g.fillRoundedRectangle(bounds,3);
     g.setColour(edge); g.drawRoundedRectangle(bounds,3,1.3f);
     g.setColour(juce::Colours::white.withAlpha(.14f)); g.drawRoundedRectangle(bounds.reduced(1.5f),2,1);
     const float tabWidth=juce::jmin(bounds.getWidth()-24.0f,static_cast<float>(title.length())*7.4f+24.0f);
-    g.setColour(juce::Colour{0xff143749}); g.fillRect(bounds.getX()+12,bounds.getY()+1,tabWidth,22.0f);
+    g.setColour(juce::Colour{0xff4a101c}); g.fillRect(bounds.getX()+12,bounds.getY()+1,tabWidth,22.0f);
     g.setColour(ink); g.setFont(juce::FontOptions(11.0f,juce::Font::bold));
     g.drawText(title,juce::Rectangle<float>(bounds.getX()+23,bounds.getY()+2,tabWidth-15,19),juce::Justification::centredLeft);
 }
@@ -66,7 +66,7 @@ void configureReadout(juce::Slider& slider)
 {
     slider.setColour(juce::Slider::textBoxTextColourId,accent);
     slider.setColour(juce::Slider::textBoxBackgroundColourId,well);
-    slider.setColour(juce::Slider::textBoxOutlineColourId,juce::Colour{0xff3c6c82});
+    slider.setColour(juce::Slider::textBoxOutlineColourId,juce::Colour{0xff87424f});
 }
 }
 
@@ -75,10 +75,10 @@ BassLookAndFeel::BassLookAndFeel()
     setColour(juce::ComboBox::backgroundColourId,well);
     setColour(juce::ComboBox::textColourId,ink);
     setColour(juce::ComboBox::outlineColourId,edge);
-    setColour(juce::PopupMenu::backgroundColourId,juce::Colour{0xff123448});
+    setColour(juce::PopupMenu::backgroundColourId,juce::Colour{0xff37101a});
     setColour(juce::PopupMenu::textColourId,ink);
-    setColour(juce::PopupMenu::highlightedBackgroundColourId,juce::Colour{0xff2e6981});
-    setColour(juce::TextButton::buttonColourId,juce::Colour{0xff173d52});
+    setColour(juce::PopupMenu::highlightedBackgroundColourId,juce::Colour{0xff7d2b3c});
+    setColour(juce::TextButton::buttonColourId,juce::Colour{0xff4b1422});
     setColour(juce::TextButton::textColourOffId,well);
     setColour(juce::TextButton::textColourOnId,well);
     setColour(juce::AlertWindow::backgroundColourId,well);
@@ -181,7 +181,7 @@ void BassLookAndFeel::drawComboBox(juce::Graphics& g,int width,int height,bool,i
     const auto bounds=juce::Rectangle<float>(0,0,static_cast<float>(width),static_cast<float>(height)).reduced(1);
     g.setColour(well); g.fillRoundedRectangle(bounds,2);
     g.setColour(edge); g.drawRoundedRectangle(bounds,2,1.5f);
-    g.setColour(juce::Colour{0xff55869c}); g.drawLine(2,static_cast<float>(height)-1,static_cast<float>(width)-2,static_cast<float>(height)-1,1);
+    g.setColour(juce::Colour{0xff985560}); g.drawLine(2,static_cast<float>(height)-1,static_cast<float>(width)-2,static_cast<float>(height)-1,1);
     juce::Path arrow;
     const float right=static_cast<float>(width)-16, middle=static_cast<float>(height)*.5f;
     arrow.addTriangle(right-4,middle-2,right+4,middle-2,right,middle+3);
@@ -289,7 +289,7 @@ RaBASSEditor::RaBASSEditor(RaBASSProcessor& p)
     keyboard.setName("MIDI KEYBOARD");
     keyboard.setAvailableRange(24,84); keyboard.setLowestVisibleKey(36); keyboard.setKeyWidth(25); keyboard.setWantsKeyboardFocus(false);
     keyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId,juce::Colour{0xffd5dfe3});
-    keyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId,juce::Colour{0xff102430});
+    keyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId,juce::Colour{0xff200c13});
     keyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId,accent.withAlpha(.65f)); addAndMakeVisible(keyboard);
     panic.setName("PANIC"); previousPreset.setName("PREVIOUS PRESET"); nextPreset.setName("NEXT PRESET");
     panic.onClick=[this] { processor.reset(); processor.keyboard.allNotesOff(0); };
@@ -323,7 +323,7 @@ void RaBASSEditor::paint(juce::Graphics& g)
     g.setFont(juce::FontOptions(11.0f,juce::Font::bold)); g.setColour(muted);
     g.drawText("SUBTRACTIVE BASS SYNTH",248,25,330,18,juce::Justification::centredLeft);
     g.setColour(amber); g.setFont(juce::FontOptions(10.0f));
-    g.drawText("UI PREVIEW 03  /  v" JucePlugin_VersionString,248,49,330,18,juce::Justification::centredLeft);
+    g.drawText("UI PREVIEW 04  /  v" JucePlugin_VersionString,248,49,330,18,juce::Justification::centredLeft);
     drawPanel(g,{28,104,636,234},"BASS GENERATOR");
     drawPanel(g,{680,104,260,454},"FILTER MODULE");
     drawPanel(g,{956,104,156,454},"OUTPUT MODULE");
@@ -347,7 +347,7 @@ void RaBASSEditor::paint(juce::Graphics& g)
     g.setColour(muted); g.setFont(juce::FontOptions(9.0f));
     g.drawText("OUTPUT LEVEL",978,532,112,14,juce::Justification::centred);
     g.drawText("INDEPENDENT AUDIO",52,735,330,16,juce::Justification::centredLeft);
-    g.drawText("RaBASS  /  UI PREVIEW 03",780,735,308,16,juce::Justification::centredRight);
+    g.drawText("RaBASS  /  UI PREVIEW 04",780,735,308,16,juce::Justification::centredRight);
     drawScrew(g,22,24,.5f); drawScrew(g,1118,24,-.4f); drawScrew(g,22,736,-.35f); drawScrew(g,1118,736,.6f);
 }
 void RaBASSEditor::resized()
