@@ -81,20 +81,40 @@ RaBASSEditor::RaBASSEditor(RaBASSProcessor& p)
         dial.label.setJustificationType(juce::Justification::centred);
         addAndMakeVisible(dial.slider); addAndMakeVisible(dial.label);
     }
-    waveform.addItemList({"Saw","Pulse","Triangle"},1);
+    const std::array<const char*,3> oscillatorNames {"SAWTOOTH", "TRIANGLE", "SINE"};
+    for (size_t i=0;i<oscillatorLevels.size();++i)
+    {
+        auto& level=oscillatorLevels[i];
+        level.slider.setName(oscillatorNames[i]);
+        level.slider.setSliderStyle(juce::Slider::LinearHorizontal);
+        level.slider.setTextBoxStyle(juce::Slider::TextBoxRight,false,42,22);
+        level.slider.setColour(juce::Slider::thumbColourId,accent);
+        level.slider.setColour(juce::Slider::trackColourId,accent);
+        level.slider.setColour(juce::Slider::backgroundColourId,juce::Colour{0xff2e3c48});
+        level.slider.setColour(juce::Slider::textBoxTextColourId,ink);
+        level.slider.setColour(juce::Slider::textBoxBackgroundColourId,juce::Colours::transparentBlack);
+        level.slider.setColour(juce::Slider::textBoxOutlineColourId,juce::Colours::transparentBlack);
+        level.attachment=std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(p.parameters,parameterIds[16+i],level.slider);
+        level.slider.textFromValueFunction=[](double value) { return juce::String(value*100,0)+" %"; };
+        level.slider.valueFromTextFunction=[](const juce::String& text) { return text.getDoubleValue()/100; };
+        level.slider.updateText();
+        level.label.setText(oscillatorNames[i],juce::dontSendNotification);
+        level.label.setColour(juce::Label::textColourId,muted);
+        level.label.setFont(juce::FontOptions(10.0f,juce::Font::bold));
+        addAndMakeVisible(level.slider); addAndMakeVisible(level.label);
+    }
     mode.addItemList({"Mono / legato","Poly / 8 voices"},1);
     for (int i=0;i<p.getNumPrograms();++i) presets.addItem(p.getProgramName(i),i+1);
     presets.setSelectedId(p.getCurrentProgram()+1,juce::dontSendNotification);
     presets.onChange=[this] { processor.setCurrentProgram(presets.getSelectedId()-1); };
-    waveAttachment=std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(p.parameters,"wave",waveform);
     modeAttachment=std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(p.parameters,"mode",mode);
-    addAndMakeVisible(waveform); addAndMakeVisible(mode); addAndMakeVisible(presets);
+    addAndMakeVisible(mode); addAndMakeVisible(presets);
     const auto label=[this](juce::Label& l,const char* text)
     {
         l.setText(text,juce::dontSendNotification); l.setColour(juce::Label::textColourId,muted);
         l.setFont(juce::FontOptions(10.0f,juce::Font::bold)); addAndMakeVisible(l);
     };
-    label(waveLabel,"WAVEFORM"); label(modeLabel,"VOICE MODE"); label(presetLabel,"FACTORY PRESET");
+    label(modeLabel,"VOICE MODE"); label(presetLabel,"FACTORY PRESET");
     keyboard.setAvailableRange(24,84); keyboard.setLowestVisibleKey(36);
     keyboard.setKeyWidth(24); keyboard.setWantsKeyboardFocus(false);
     keyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId,juce::Colour{0xffc4ced5});
@@ -117,7 +137,7 @@ void RaBASSEditor::paint(juce::Graphics& g)
     g.fillAll(background);
     g.setColour(accent); g.fillRoundedRectangle(24,28,5,48,2);
     g.setColour(ink); g.setFont(juce::FontOptions(46.0f,juce::Font::bold)); g.drawText("RaBASS",40,22,250,58,juce::Justification::centredLeft);
-    g.setColour(muted); g.setFont(juce::FontOptions(11.0f)); g.drawText("ANALOG BASS INSTRUMENT  /  v" JucePlugin_VersionString,42,82,360,18,juce::Justification::centredLeft);
+    g.setColour(muted); g.setFont(juce::FontOptions(11.0f)); g.drawText("SUBTRACTIVE BASS SYNTH  /  v" JucePlugin_VersionString,42,82,360,18,juce::Justification::centredLeft);
     const auto drawPanel=[&g](int x,int y,int w,const char* title)
     {
         g.setColour(panel); g.fillRoundedRectangle(static_cast<float>(x),static_cast<float>(y),static_cast<float>(w),160,10);
@@ -136,8 +156,13 @@ void RaBASSEditor::paint(juce::Graphics& g)
 }
 void RaBASSEditor::resized()
 {
-    waveLabel.setBounds(24,114,150,16); waveform.setBounds(24,134,180,28);
-    modeLabel.setBounds(224,114,180,16); mode.setBounds(224,134,200,28);
+    for (size_t i=0;i<oscillatorLevels.size();++i)
+    {
+        const int x=24+static_cast<int>(i)*136;
+        oscillatorLevels[i].label.setBounds(x,114,130,16);
+        oscillatorLevels[i].slider.setBounds(x,134,130,28);
+    }
+    modeLabel.setBounds(440,114,200,16); mode.setBounds(440,134,200,28);
     presetLabel.setBounds(676,105,280,16); presets.setBounds(676,127,300,35);
     const auto row=[this](int first,int count,int x,int y,int width)
     {

@@ -61,7 +61,8 @@ int main()
     a.allNotesOff(2,true); render(a,48000);
     require(energy(render(a,4096))<1e-12,"all sound off clears voices");
 
-    p.wave=2; p.sub=0; p.mix=0; p.detune=0; p.cutoff=18000; p.filterEnv=0;
+    p.sawLevel=0; p.triangleLevel=1; p.sineLevel=0;
+    p.sub=0; p.mix=0; p.detune=0; p.cutoff=18000; p.filterEnv=0;
     p.resonance=0; p.drive=0; p.outputDb=-3;
     a.setParameters(p); a.prepare(48000); a.noteOn(1,45,1); render(a,48000);
     require(std::abs(frequency(render(a,48000),48000)-110)<2,"concert tuning A2 110 Hz");
@@ -74,6 +75,29 @@ int main()
     std::vector<float> fragmented;
     for (int i=0;i<64;++i) { const auto part=render(b,64); fragmented.insert(fragmented.end(),part.begin(),part.end()); }
     require(contiguous==fragmented,"render independent of host block size");
+
+    // Each waveform must work alone; the mixture must change the signal.
+    std::array<std::vector<float>,3> solo;
+    for (size_t shape=0;shape<solo.size();++shape)
+    {
+        p.sawLevel=shape==0 ? 1.0f : 0.0f;
+        p.triangleLevel=shape==1 ? 1.0f : 0.0f;
+        p.sineLevel=shape==2 ? 1.0f : 0.0f;
+        a.setParameters(p); a.prepare(48000); a.noteOn(1,45,1);
+        render(a,48000); solo[shape]=render(a,48000);
+        require(energy(solo[shape])>.0001,"each waveform produces sound alone");
+        require(std::abs(frequency(solo[shape],48000)-110)<2,"each waveform has the same fundamental pitch");
+    }
+    require(solo[0]!=solo[1] && solo[0]!=solo[2] && solo[1]!=solo[2],"waveforms have distinct signals");
+    p.sawLevel=.7f; p.triangleLevel=.4f; p.sineLevel=.3f;
+    a.setParameters(p); a.prepare(48000); a.noteOn(1,45,1); render(a,48000);
+    const auto mixed=render(a,48000);
+    require(energy(mixed)>.0001 && mixed!=solo[0] && mixed!=solo[1] && mixed!=solo[2],"three-wave mixer combines all levels");
+    p.sawLevel=0; p.triangleLevel=0; p.sineLevel=0;
+    a.setParameters(p); a.prepare(48000); a.noteOn(1,45,1);
+    require(energy(render(a,4800))==0,"all oscillator levels zero mutes the main signal");
+    p.sub=.6f; a.setParameters(p); a.prepare(48000); a.noteOn(1,45,1);
+    require(energy(render(a,48000))>.0001,"original sub remains independent of the three-wave mixer");
 
     std::mt19937 random(0x524142);
     for (double rate : {8000.0,44100.0,48000.0,96000.0})
@@ -90,7 +114,10 @@ int main()
                 case 2: a.sustainPedal(channel,(random()%2)!=0); break;
                 default: a.noteOn(channel,note,.8f); break;
             }
-            p.wave=static_cast<int>(random()%3); a.setParameters(p); render(a,128);
+            p.sawLevel=static_cast<float>(random()%101)/100;
+            p.triangleLevel=static_cast<float>(random()%101)/100;
+            p.sineLevel=static_cast<float>(random()%101)/100;
+            a.setParameters(p); render(a,128);
         }
         for (int c=1;c<=16;++c) a.allNotesOff(c,true);
         render(a,static_cast<int>(rate));

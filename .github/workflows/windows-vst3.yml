@@ -1,0 +1,128 @@
+name: Windows VST3
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'Source/**'
+      - 'Tests/**'
+      - 'ThirdParty/**'
+      - 'CMakeLists.txt'
+      - 'CMakePresets.json'
+      - 'Build-Windows.cmd'
+      - 'Package-VST3.ps1'
+      - '.github/workflows/windows-vst3.yml'
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: windows-vst3-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build-test-package:
+    runs-on: windows-2025
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build x64 VST3 and run tests
+        shell: powershell
+        run: |
+          & .\Build-Windows.cmd --no-pause
+          if ($LASTEXITCODE -ne 0) { throw 'Build or tests failed.' }
+      - name: Capture instrument editor
+        shell: powershell
+        run: |
+          & .\build\windows-x64\RaBASSProcessorTests.exe RaBASS-editor.png
+          if ($LASTEXITCODE -ne 0) { throw 'Editor validation failed.' }
+      - name: Package portable VST3 and corresponding source
+        shell: powershell
+        run: .\Package-VST3.ps1 -SkipBuild
+      - name: Upload portable VST3 and source
+        uses: actions/upload-artifact@v4
+        with:
+          name: RaBASS-Windows-x64-VST3
+          path: |
+            build/packages/*
+            RaBASS-editor.png
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload test diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RaBASS-test-diagnostics
+          path: build/windows-x64/Testing/Temporary/LastTest.log
+          if-no-files-found: ignore
+  publish:
+    needs: build-test-package
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: RaBASS-Windows-x64-VST3
+          path: artifacts
+      - name: Verify packages and source provenance
+        id: package
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, json, os, re, struct, zipfile
+          root=Path('artifacts/build/packages')
+          info=json.loads((root/'release-info.json').read_text(encoding='utf-8-sig'))
+          version=info['version']
+          assert re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+',version)
+          assert info['sourceCommit']==os.environ['GITHUB_SHA']
+          for line in (root/'SHA256SUMS.txt').read_text().splitlines():
+              expected,name=line.split('  ',1)
+              assert Path(name).name==name
+              assert hashlib.sha256((root/name).read_bytes()).hexdigest()==expected
+          with zipfile.ZipFile(root/'RaBASS-Source.zip') as z:
+              assert z.comment.decode()==os.environ['GITHUB_SHA']
+          with zipfile.ZipFile(root/f'RaBASS-{version}-Windows-x64-VST3.zip') as z:
+              assert not any(name.lower().endswith('.exe') for name in z.namelist())
+              data=z.read('RaBASS.vst3/Contents/x86_64-win/RaBASS.vst3')
+              pe=struct.unpack_from('<I',data,0x3c)[0]
+              assert data[pe:pe+4]==b'PE\0\0' and struct.unpack_from('<H',data,pe+4)[0]==0x8664
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f: f.write('version='+version+'\n')
+          PY
+      - name: Publish VST3 release
+        env:
+          RABASS_VERSION: ${{ steps.package.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="v$RABASS_VERSION"
+          cat > notes.md <<EOF
+          RaBASS $RABASS_VERSION — subtractive bass synth za Windows x64 / VST3.
+
+          Sawtooth, Triangle i Sine imaju zasebne razine i mogu se slobodno miješati prije postojećeg low-pass filtera. Sub, BLEND/DETUNE, ADSR, filter envelope, drive, glide, mono/poly, šest preseta i ostale kontrole ostaju dostupni.
+
+          Preuzmite RaBASS-$RABASS_VERSION-Windows-x64-VST3.zip i kopirajte cijelu mapu RaBASS.vst3 u C:\Program Files\Common Files\VST3. U Ableton Liveu 12 uključite VST3 system folders, kliknite Rescan i dodajte instrument na MIDI traku.
+
+          Isporuka je prijenosni VST3 ZIP s izvorima i SHA256 provjerama, bez Windows instalera. Projekti iz 0.1.0 učitavaju ostale parametre; stari Pulse zamjenjuje se približnim saw/triangle miksom. Automatizacija novog miksera koristi tri zasebna parametra.
+
+          Provjereni Windows build i testovi: https://github.com/$GH_REPO/actions/runs/$GITHUB_RUN_ID
+
+          Izvorni RaBASS kod: CC0-1.0. Kombinirani JUCE plugin koristi JUCE-ovu AGPLv3 opciju i pripadajuće licence. Arhive izvora RaBASS-a i JUCE-a priložene su uz plugin. Završna provjera u stvarnom Ableton Liveu 12 ostaje na korisnikovom Windows računalu.
+          EOF
+          if gh release view "$tag" --json isDraft > existing.json 2>/dev/null; then
+            python3 - <<'PY'
+          import json
+          assert json.load(open('existing.json'))['isDraft'], 'This version is already published; bump the project version for a new release.'
+          PY
+          else
+            gh release create "$tag" --draft --target "$GITHUB_SHA" --title "RaBASS $RABASS_VERSION — Subtractive Bass VST3" --notes-file notes.md
+          fi
+          gh release upload "$tag" artifacts/build/packages/* artifacts/RaBASS-editor.png --clobber
+          gh release edit "$tag" --draft=false --notes-file notes.md --latest

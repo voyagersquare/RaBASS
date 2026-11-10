@@ -23,7 +23,7 @@ ctest --preset windows-release
 if errorlevel 1 goto :failed
 echo.
 echo BUILD SUCCEEDED: build\windows-x64\RaBASS_artefacts\Release\VST3\RaBASS.vst3
-echo Run Build-Installer.cmd to create the Windows setup wizard.
+echo Run powershell -NoProfile -File Package-VST3.ps1 -SkipBuild to create the portable VST3 ZIP.
 if not defined RABASS_NO_PAUSE pause
 exit /b 0
 :missingvs

@@ -9,9 +9,9 @@ namespace rabass
 constexpr double pi = 3.14159265358979323846;
 struct Parameters
 {
-    int wave = 0; // saw, pulse, triangle
     bool poly = false;
     float mix = 0.35f, detune = 7.0f, sub = 0.4f;
+    float sawLevel = 0.75f, triangleLevel = 0.2f, sineLevel = 0.15f;
     float cutoff = 700.0f, resonance = 0.2f, filterEnv = 3.0f, filterDecay = 0.25f;
     float attack = 0.005f, decay = 0.25f, sustain = 0.65f, release = 0.15f;
     float drive = 0.2f, glide = 0.07f, outputDb = -9.0f;
@@ -163,6 +163,9 @@ public:
             smoothParameter(smooth.mix, target.mix);
             smoothParameter(smooth.detune, target.detune);
             smoothParameter(smooth.sub, target.sub);
+            smoothParameter(smooth.sawLevel, target.sawLevel);
+            smoothParameter(smooth.triangleLevel, target.triangleLevel);
+            smoothParameter(smooth.sineLevel, target.sineLevel);
             smoothParameter(smooth.drive, target.drive);
             smoothParameter(smooth.outputDb, target.outputDb);
             float sum = 0;
@@ -183,8 +186,9 @@ public:
                 float filtered = 0;
                 for (int oversample = 0; oversample < 2; ++oversample)
                 {
-                    const double osc = waveform(v.phase1,d1,target.wave) * (1 - smooth.mix)
-                        + waveform(v.phase2,d2,target.wave) * smooth.mix;
+                    const double levelScale = 1.0 / std::max(1.0f, smooth.sawLevel + smooth.triangleLevel + smooth.sineLevel);
+                    const double osc = levelScale * (oscillatorMix(v.phase1,d1,smooth) * (1 - smooth.mix)
+                        + oscillatorMix(v.phase2,d2,smooth) * smooth.mix);
                     const double raw = (osc + smooth.sub * std::sin(2*pi*v.subPhase)) / (1+smooth.sub);
                     const double driven = std::tanh(raw * (1 + 7 * smooth.drive));
                     const double band = a * (v.ic1 + g * (driven - v.ic2));
@@ -223,11 +227,12 @@ private:
         if (t>1-dt) { t=(t-1)/dt; return t*t+t+t+1; }
         return 0;
     }
-    static double waveform(double phase, double dt, int shape) noexcept
+    static double oscillatorMix(double phase, double dt, const Parameters& p) noexcept
     {
-        if (shape==1) return (phase<0.5 ? 1.0 : -1.0) + blep(phase,dt) - blep(std::fmod(phase+0.5,1.0),dt);
-        if (shape==2) return 1 - 4*std::abs(phase-0.5);
-        return 2*phase-1-blep(phase,dt);
+        const double saw = 2*phase-1-blep(phase,dt);
+        const double triangle = 1-4*std::abs(phase-0.5);
+        const double sine = std::sin(2*pi*phase);
+        return p.sawLevel*saw + p.triangleLevel*triangle + p.sineLevel*sine;
     }
     bool lastHeld(int& channel, int& note) const noexcept
     {

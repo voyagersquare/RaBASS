@@ -3,21 +3,24 @@
 
 namespace
 {
-struct Preset { const char* name; std::array<float,16> values; };
+struct Preset { const char* name; std::array<float,19> values; };
 constexpr std::array<Preset,6> presets {{
-    {"01  Foundation", {0,0,.35f,7,.4f,700,.2f,3,.25f,.005f,.25f,.65f,.15f,.2f,.07f,-9}},
-    {"02  Rubber",     {1,0,.25f,3,.3f,240,.55f,4.8f,.18f,.003f,.18f,.35f,.12f,.3f,.09f,-10}},
-    {"03  Deep Sub",   {2,0,0,0,.95f,190,.05f,.4f,.5f,.012f,.4f,.85f,.3f,.08f,.12f,-6}},
-    {"04  Acid Line",  {0,0,.1f,1,.15f,450,.75f,5,.16f,.002f,.16f,.2f,.1f,.45f,.06f,-12}},
-    {"05  Detuned",    {0,0,.5f,18,.35f,1200,.3f,2,.4f,.008f,.4f,.7f,.22f,.35f,.15f,-11}},
-    {"06  Velvet Poly",{2,1,.4f,9,.25f,1800,.1f,1.5f,.6f,.035f,.55f,.6f,.65f,.12f,0,-12}}
+    {"01  Foundation", {0,0,.35f,7,.4f,700,.2f,3,.25f,.005f,.25f,.65f,.15f,.2f,.07f,-9, .75f,.2f,.15f}},
+    {"02  Rubber",     {1,0,.25f,3,.3f,240,.55f,4.8f,.18f,.003f,.18f,.35f,.12f,.3f,.09f,-10, .25f,.65f,.1f}},
+    {"03  Deep Sub",   {2,0,0,0,.95f,190,.05f,.4f,.5f,.012f,.4f,.85f,.3f,.08f,.12f,-6, 0,.15f,1}},
+    {"04  Acid Line",  {0,0,.1f,1,.15f,450,.75f,5,.16f,.002f,.16f,.2f,.1f,.45f,.06f,-12, 1,0,0}},
+    {"05  Detuned",    {0,0,.5f,18,.35f,1200,.3f,2,.4f,.008f,.4f,.7f,.22f,.35f,.15f,-11, .8f,.2f,.15f}},
+    {"06  Velvet Poly",{2,1,.4f,9,.25f,1800,.1f,1.5f,.6f,.035f,.55f,.6f,.65f,.12f,0,-12, 0,.85f,.3f}}
 }};
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout RaBASSProcessor::createLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"wave",1}, "Waveform", juce::StringArray{"Saw", "Pulse", "Triangle"},0));
+    // Retain the original ID and position for older DAW sessions. It is used
+    // only when migrating their saved oscillator selection to the new mixer.
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"wave",1}, "Waveform", juce::StringArray{"Saw", "Pulse", "Triangle"},0,
+        juce::AudioParameterChoiceAttributes{}.withAutomatable(false)));
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"mode",1}, "Voice mode", juce::StringArray{"Mono / legato", "Poly / 8 voices"},0));
     const auto add = [&layout](const char* id, const char* name, float low, float high, float value, float centre, const char* unit)
     {
@@ -40,6 +43,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout RaBASSProcessor::createLayou
     add("drive","Drive",0,1,.2f,.5f,"");
     add("glide","Glide",0,.5f,.07f,.1f,"s");
     add("output","Output",-36,6,-9,-9,"dB");
+    add("sawLevel","Sawtooth level",0,1,.75f,.5f,"");
+    add("triangleLevel","Triangle level",0,1,.2f,.5f,"");
+    add("sineLevel","Sine level",0,1,.15f,.5f,"");
     return layout;
 }
 
@@ -65,12 +71,13 @@ bool RaBASSProcessor::isBusesLayoutSupported(const BusesLayout& layout) const
 }
 rabass::Parameters RaBASSProcessor::readParameters() const noexcept
 {
-    std::array<float,16> v{};
+    std::array<float,19> v{};
     for (size_t i=0;i<v.size();++i) v[i]=raw[i]->load(std::memory_order_relaxed);
     rabass::Parameters p;
-    p.wave=static_cast<int>(v[0]); p.poly=v[1]>.5f;
+    p.poly=v[1]>.5f;
     p.mix=v[2]; p.detune=v[3]; p.sub=v[4]; p.cutoff=v[5]; p.resonance=v[6]; p.filterEnv=v[7]; p.filterDecay=v[8];
     p.attack=v[9]; p.decay=v[10]; p.sustain=v[11]; p.release=v[12]; p.drive=v[13]; p.glide=v[14]; p.outputDb=v[15];
+    p.sawLevel=v[16]; p.triangleLevel=v[17]; p.sineLevel=v[18];
     return p;
 }
 void RaBASSProcessor::dispatchMidi(const juce::MidiMessage& m)
@@ -127,7 +134,7 @@ void RaBASSProcessor::setCurrentProgram(int index)
 void RaBASSProcessor::getStateInformation(juce::MemoryBlock& data)
 {
     auto state=parameters.copyState();
-    state.setProperty("schemaVersion",1,nullptr);
+    state.setProperty("schemaVersion",2,nullptr);
     state.setProperty("program",currentProgram.load(),nullptr);
     if (const auto xml=state.createXml()) copyXmlToBinary(*xml,data);
 }
@@ -137,7 +144,26 @@ void RaBASSProcessor::setStateInformation(const void* data,int size)
     {
         if (!xml->hasTagName(parameters.state.getType().toString())) return;
         auto state=juce::ValueTree::fromXml(*xml);
-        if (!state.isValid() || static_cast<int>(state.getProperty("schemaVersion",1))!=1) return;
+        if (!state.isValid()) return;
+        const int schema=static_cast<int>(state.getProperty("schemaVersion",1));
+        if (schema<1 || schema>2) return;
+        if (schema==1)
+        {
+            const auto legacyWave=state.getChildWithProperty("id","wave");
+            const int shape=static_cast<int>(legacyWave.getProperty("value",0));
+            // Pulse is approximated by a saw/triangle mix; the rest of the
+            // old session's parameters, including detune and sub, are retained.
+            const std::array<float,3> levels = shape==2 ? std::array<float,3>{0,1,0}
+                : shape==1 ? std::array<float,3>{.7f,.3f,0} : std::array<float,3>{1,0,0};
+            for (size_t i=0;i<levels.size();++i)
+            {
+                auto child=state.getChildWithProperty("id",parameterIds[16+i]);
+                if (!child.isValid())
+                { child=juce::ValueTree{"PARAM"}; child.setProperty("id",parameterIds[16+i],nullptr); state.addChild(child,-1,nullptr); }
+                child.setProperty("value",levels[i],nullptr);
+            }
+            state.setProperty("schemaVersion",2,nullptr);
+        }
         parameters.replaceState(state);
         currentProgram=juce::jlimit(0,getNumPrograms()-1,static_cast<int>(state.getProperty("program",0)));
         resetRequested=true;

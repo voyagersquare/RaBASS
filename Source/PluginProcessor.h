@@ -2,9 +2,10 @@
 #include <JuceHeader.h>
 #include "BassEngine.h"
 
-inline constexpr std::array<const char*,16> parameterIds {
+inline constexpr std::array<const char*,19> parameterIds {
     "wave", "mode", "mix", "detune", "sub", "cutoff", "resonance", "filterEnv", "filterDecay",
-    "attack", "decay", "sustain", "release", "drive", "glide", "output"
+    "attack", "decay", "sustain", "release", "drive", "glide", "output",
+    "sawLevel", "triangleLevel", "sineLevel"
 };
 
 class RaBASSProcessor final : public juce::AudioProcessor
@@ -38,7 +39,7 @@ private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createLayout();
     rabass::Parameters readParameters() const noexcept;
     void dispatchMidi(const juce::MidiMessage&);
-    std::array<std::atomic<float>*,16> raw{};
+    std::array<std::atomic<float>*,19> raw{};
     rabass::BassEngine engine;
     std::atomic<int> currentProgram{0};
     std::atomic<bool> resetRequested{false};

@@ -25,9 +25,10 @@ private:
     RaBASSProcessor& processor;
     BassLookAndFeel look;
     std::array<Dial,14> dials;
-    juce::ComboBox waveform, mode, presets;
-    juce::Label waveLabel, modeLabel, presetLabel;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> waveAttachment, modeAttachment;
+    std::array<Dial,3> oscillatorLevels;
+    juce::ComboBox mode, presets;
+    juce::Label modeLabel, presetLabel;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> modeAttachment;
     juce::MidiKeyboardComponent keyboard;
     juce::TextButton panic{"PANIC"};
     float displayedPeak=0;
