@@ -74,7 +74,8 @@ if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -F
 foreach ($dir in @('VST3','Docs','Licenses')) { New-Item -ItemType Directory -Path (Join-Path $stage $dir) -Force | Out-Null }
 Copy-Item -LiteralPath $bundle -Destination (Join-Path $stage 'VST3') -Recurse
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Install-Info.txt'), (Join-Path $PSScriptRoot 'Third-Party-Notices.txt') -Destination (Join-Path $stage 'Docs')
-Copy-Item -LiteralPath (Join-Path $root 'LICENSE') -Destination (Join-Path $stage 'Licenses\RaBASS-AGPL-3.0.txt')
+Copy-Item -LiteralPath (Join-Path $root 'LICENSE') -Destination (Join-Path $stage 'Licenses\RaBASS-CC0.txt')
+Copy-Item -LiteralPath (Join-Path $root 'ThirdParty\LICENSE-AGPL-3.0.txt') -Destination (Join-Path $stage 'Licenses')
 $juce = Join-Path $build '_deps\juce-src'
 if (-not (Test-Path -LiteralPath (Join-Path $juce 'LICENSE.md'))) { throw 'JUCE licence tree missing.' }
 @((Get-Item -LiteralPath (Join-Path $juce 'LICENSE.md')); (Get-ChildItem -LiteralPath (Join-Path $juce 'modules') -File -Recurse | Where-Object { $_.Name -match '(?i)licen[cs]e|^copying' })) | ForEach-Object {

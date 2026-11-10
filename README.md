@@ -92,7 +92,10 @@ Ovdje se ne tvrdi da je Ableton host test izveden na runneru.
 
 ## Licenca
 
-AGPL-3.0-only; vidi [LICENSE](LICENSE). JUCE 8.0.6 koristi se prema njegovoj
-AGPLv3 opciji. Windows artifact uključuje izvor ovog projekta i odgovarajući
-JUCE source uz njihove licence. Za drukčiji model distribucije potrebno je
-uskladiti licencu projekta i odgovarajuću JUCE licencu.
+Izvorni RaBASS kod koristi **CC0-1.0**, prema licenci odabranoj pri otvaranju
+repozitorija; vidi [LICENSE](LICENSE). JUCE 8.0.6 koristi se prema njegovoj
+**AGPLv3** opciji: kombinirani JUCE plugin distribuira se pod tim uvjetima,
+uz pripadajuće licence ostalih ovisnosti. CC0 ne mijenja JUCE-ove uvjete.
+Windows artifact uključuje izvor ovog projekta i odgovarajući JUCE source
+uz njihove licence. Zatvorena distribucija kombiniranog plugina zahtijeva
+odgovarajuću komercijalnu JUCE licencu.

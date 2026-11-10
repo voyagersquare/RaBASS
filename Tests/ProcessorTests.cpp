@@ -49,6 +49,7 @@ int main(int argc,char** argv)
         {
             auto image=editor->createComponentSnapshot(editor->getLocalBounds(),true,1.0f);
             juce::File output=juce::File::getCurrentWorkingDirectory().getChildFile(argv[1]);
+            output.deleteFile();
             auto stream=output.createOutputStream();
             require(stream!=nullptr,"screenshot file");
             require(juce::PNGImageFormat{}.writeImageToStream(image,*stream),"editor screenshot");
