@@ -71,6 +71,7 @@ foreach ($relative in @('modules/juce_graphics/image_formats/jpglib/README','mod
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $portable = Join-Path $OutputDirectory "RaBASS-$version-Windows-x64-VST3.zip"
 if (Test-Path -LiteralPath $portable) { Remove-Item -LiteralPath $portable -Force }
+Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $stream = [IO.File]::Create($portable)
 $zip = [IO.Compression.ZipArchive]::new($stream, [IO.Compression.ZipArchiveMode]::Create)
