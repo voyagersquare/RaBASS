@@ -71,7 +71,23 @@ foreach ($relative in @('modules/juce_graphics/image_formats/jpglib/README','mod
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $portable = Join-Path $OutputDirectory "RaBASS-$version-Windows-x64-VST3.zip"
 if (Test-Path -LiteralPath $portable) { Remove-Item -LiteralPath $portable -Force }
-Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $portable -CompressionLevel Optimal
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$stream = [IO.File]::Create($portable)
+$zip = [IO.Compression.ZipArchive]::new($stream, [IO.Compression.ZipArchiveMode]::Create)
+try {
+    Get-ChildItem -LiteralPath $stage -File -Recurse | ForEach-Object {
+        # ZIP entry names always use forward slashes, including when built by
+        # Windows PowerShell 5.1. Compress-Archive can retain backslashes.
+        $entryName = $_.FullName.Substring($stage.Length + 1).Replace('\', '/')
+        [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $_.FullName, $entryName, [IO.Compression.CompressionLevel]::Optimal) | Out-Null
+    }
+} finally { $zip.Dispose(); $stream.Dispose() }
+$verification = [IO.Compression.ZipFile]::OpenRead($portable)
+try {
+    if ($null -eq $verification.GetEntry('RaBASS.vst3/Contents/x86_64-win/RaBASS.vst3')) {
+        throw 'The portable ZIP has an invalid VST3 bundle layout.'
+    }
+} finally { $verification.Dispose() }
 & git -C $root archive --format=zip "--output=$(Join-Path $OutputDirectory 'RaBASS-Source.zip')" HEAD
 if ($LASTEXITCODE -ne 0) { throw 'RaBASS source archive failed.' }
 & git -C $juce archive --format=zip "--output=$(Join-Path $OutputDirectory 'JUCE-8.0.6-Source.zip')" HEAD
