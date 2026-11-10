@@ -1,0 +1,14 @@
+RaBASS 0.1.0
+Copyright (c) 2026 RaBASS contributors
+Project source code: AGPL-3.0-only. See LICENSE in the source archive.
+
+JUCE 8.0.6, Copyright Raw Material Software Limited.
+Used under JUCE's AGPLv3 open-source option. See Licenses/JUCE/LICENSE.md.
+JUCE's embedded dependencies retain their own notices, included under
+Licenses/JUCE. The VST3 interface SDK bundled with JUCE retains the Steinberg
+licence notices included in that tree. VST is a trademark of Steinberg Media
+Technologies GmbH.
+
+RaBASS uses no sample libraries or third-party sound recordings.
+Corresponding RaBASS source, build instructions and the pinned JUCE revision
+are supplied alongside the Windows installer in the GitHub Actions artifact.
