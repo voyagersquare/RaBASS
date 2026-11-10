@@ -6,3 +6,4 @@ CMakeUserPresets.json
 *.suo
 *.wav
 *.png
+!Assets/*.png

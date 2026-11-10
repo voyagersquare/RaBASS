@@ -4,6 +4,8 @@ Analogni bass instrument za **Windows 10/11 x64**, u **VST3** formatu.
 Namijenjen MIDI trakama u Ableton Liveu 12. Zaseban projekt od ChopLaba,
 s istim tipom CMake/JUCE builda i Windows instalacijskog čarobnjaka.
 
+![RaBASS instrument](Assets/RaBASS-editor.png)
+
 ## Zvuk i kontrole
 
 - Dva oscilatora: saw, pulse ili triangle; blend i detune drugog oscilatora.

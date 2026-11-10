@@ -74,6 +74,7 @@ RaBASSEditor::RaBASSEditor(RaBASSProcessor& p)
             if (id=="mix" || id=="sub" || id=="resonance" || id=="sustain" || id=="drive") return value/100;
             return value;
         };
+        dial.slider.updateText();
         dial.label.setText(labels[i],juce::dontSendNotification);
         dial.label.setFont(juce::FontOptions(11.0f,juce::Font::bold));
         dial.label.setColour(juce::Label::textColourId,muted);
