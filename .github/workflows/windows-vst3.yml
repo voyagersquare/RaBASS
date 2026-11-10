@@ -102,13 +102,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tag="v$RABASS_VERSION-ui-preview.1"
+          tag="v$RABASS_VERSION-ui-preview.2"
           cat > notes.md <<EOF
-          RaBASS $RABASS_VERSION — UI Preview 01 za Windows x64 / VST3.
+          RaBASS $RABASS_VERSION — UI Preview 02: User Presets za Windows x64 / VST3.
 
-          Probno sučelje s plavom brušenom metalnom podlogom, reljefnim potenciometrima, okomitim klizačima, odvojenim modulima i upravljanjem presetima. Sve kontrole imaju zaseban prostor; automatske provjere pokrivaju preklapanje i granice kontrola. Dimenzije: 1140 x 760.
+          SAVE PRESET dodan je uz preset izbornik. Spremite trenutni zvuk pod vlastitim nazivom; pojavit će se u odjeljku User presets. Tvornički zvukovi nalaze se pod Factory presets. Postojeći naziv može se zamijeniti tek nakon potvrde.
 
-          Zvuk, parametri, tri vala, preseti i spremanje stanja ostaju kao u 0.2.0. DSP engine nije mijenjan. Ova je verzija namijenjena isprobavanju izgleda i rasporeda.
+          Dodano je 12 novih bass preseta, ukupno 18 tvorničkih kombinacija. Izvornih šest ostaje sačuvano. DSP engine i postojeće kontrole nisu mijenjani. Novi raspored preset reda provjeren je na preklapanje.
+
+          User preseti pohranjuju se u korisničku mapu Independent Audio/RaBASS/Presets unutar Windows AppData/Roaming. Dostupni su nakon ponovnog pokretanja i u drugim instancama plugina. DAW projekt sprema i odabrani naziv i zvuk.
 
           Preuzmite RaBASS-$RABASS_VERSION-Windows-x64-VST3.zip i kopirajte cijelu mapu RaBASS.vst3 u C:\Program Files\Common Files\VST3. U Ableton Liveu 12 uključite VST3 system folders, kliknite Rescan i dodajte instrument na MIDI traku.
 
@@ -124,7 +126,7 @@ jobs:
           assert json.load(open('existing.json'))['isDraft'], 'This version is already published; bump the project version for a new release.'
           PY
           else
-            gh release create "$tag" --draft --prerelease --latest=false --target "$GITHUB_SHA" --title "RaBASS $RABASS_VERSION — UI Preview 01" --notes-file notes.md
+            gh release create "$tag" --draft --prerelease --latest=false --target "$GITHUB_SHA" --title "RaBASS $RABASS_VERSION — User Presets Preview" --notes-file notes.md
           fi
           gh release upload "$tag" artifacts/build/packages/* artifacts/RaBASS-editor.png --clobber
           gh release edit "$tag" --draft=false --prerelease --notes-file notes.md --latest=false

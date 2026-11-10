@@ -17,7 +17,7 @@ where git >nul 2>&1
 if errorlevel 1 goto :missingtools
 cmake --preset windows-x64
 if errorlevel 1 goto :failed
-cmake --build --preset windows-release --target RaBASS_VST3 RaBASSDspTests RaBASSProcessorTests --parallel 2
+cmake --build --preset windows-release --target RaBASS_VST3 RaBASSDspTests RaBASSProcessorTests RaBASSUserPresetTests --parallel 2
 if errorlevel 1 goto :failed
 ctest --preset windows-release
 if errorlevel 1 goto :failed

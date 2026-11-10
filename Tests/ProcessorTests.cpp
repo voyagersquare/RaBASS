@@ -81,7 +81,7 @@ int main(int argc,char** argv)
                 controls.push_back(child);
             else if (dynamic_cast<juce::Label*>(child)) labels.push_back(child);
         }
-        require(controls.size()==23,"all synth, preset and keyboard controls are present");
+        require(controls.size()==24,"all synth, save-preset and keyboard controls are present");
         for (size_t control=0;control<controls.size();++control)
         {
             require(editor->getLocalBounds().reduced(16).contains(controls[control]->getBounds()),"control stays inside the editor");

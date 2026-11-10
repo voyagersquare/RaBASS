@@ -1,4 +1,4 @@
-# RaBASS 0.3.0 — UI Preview 01
+# RaBASS 0.3.1 — UI Preview 02: User Presets
 
 **Subtractive synthesis bass synth** za Windows 10/11 x64, u **VST3** formatu.
 CMake projekt za Visual Studio 2026 i MIDI trake u Ableton Liveu 12.
@@ -7,8 +7,9 @@ Isporuka je **prijenosni VST3 ZIP i izvorni projekt**, bez Windows instalera.
 Probni UI ima plavu brušenu metalnu podlogu, reljefne potenciometre,
 okomite klizače sa skalama i jasno odvojene module. Dimenzije su 1140 × 760.
 Oscilatori, filter, envelope, output i preseti imaju zaseban prostor.
-Izbornik preseta ima i tipke za prethodni/sljedeći preset.
-Zvuk i parametri ostaju kao u 0.2.0; DSP engine nije mijenjan.
+Izbornik preseta ima odjeljke **Factory presets** i **User presets**,
+tipku **SAVE PRESET** te tipke za prethodni/sljedeći preset.
+DSP engine i izvornih šest tvorničkih zvukova nisu mijenjani.
 Prethodna [stabilna verzija 0.2.0](https://github.com/voyagersquare/RaBASS/releases/tag/v0.2.0)
 ostaje dostupna dok isprobavamo novi izgled.
 
@@ -38,7 +39,8 @@ se radi prostora u izlaznom signalu.
 - Amplitude ADSR, drive i output; 2x interno uzorkovanje oscilatora i filtera.
 - Mono s prioritetom zadnje note, legatom i glideom ili osam glasova.
 - MIDI velocity, pitch bend ±2 polutona, sustain CC64 i PANIC.
-- Šest postojećih naziva preseta, prilagođenih novom miksu valova.
+- 18 tvorničkih bass preseta: izvornih šest plus 12 novih kombinacija.
+- Spremanje i učitavanje vlastitih preseta na disk, dostupnih u svim instancama.
 - Automatizacija razina sva tri vala i ostalih aktivnih kontrola.
 - Spremanje parametara u DAW projekt, mono/stereo izlaz i miš-klavijatura.
 
@@ -48,8 +50,8 @@ Lijevi i desni kanal identični su radi centriranog basa.
 
 ## Preuzimanje i Ableton Live 12
 
-Preuzmite `RaBASS-0.3.0-Windows-x64-VST3.zip` iz
-[UI Preview izdanja](https://github.com/voyagersquare/RaBASS/releases/tag/v0.3.0-ui-preview.1).
+Preuzmite `RaBASS-0.3.1-Windows-x64-VST3.zip` iz
+[User Presets Preview izdanja](https://github.com/voyagersquare/RaBASS/releases/tag/v0.3.1-ui-preview.2).
 Paket je dostupan i u **Actions → Windows VST3 → uspješan run → Artifacts**.
 Releases uključuje izvor RaBASS-a, odgovarajući JUCE source i `SHA256SUMS.txt`.
 
@@ -63,6 +65,30 @@ Releases uključuje izvor RaBASS-a, odgovarajući JUCE source i `SHA256SUMS.txt`
 Nemojte kopirati samo unutarnji modul iz mape `Contents`.
 Pri nadogradnji zamijenite cijelu staru mapu `RaBASS.vst3`.
 Na odredišnom računalu nisu potrebni Visual Studio ni dodatni runtime download.
+
+## User presets i novi bass zvukovi
+
+1. Podesite zvuk i kliknite **SAVE PRESET** uz padajući izbornik.
+2. Unesite naziv i kliknite **Save**. Spremljeni zvuk odabire se u izborniku.
+3. U padajućem izborniku otvorite **User presets** i odaberite svoj zvuk.
+
+Nazivi mogu imati do 64 znaka. Ako naziv već postoji, plugin traži potvrdu
+prije zamjene postojećeg preseta. Spremanje ne prekida notu koja svira.
+Preset obuhvaća sve postavke zvuka, uključujući tri vala, filter, ADSR,
+mono/poly, glide, sub, drive i output.
+
+Na Windowsu se `.rabasspreset` datoteke čuvaju u:
+`%APPDATA%\Independent Audio\RaBASS\Presets`.
+Za sigurnosnu kopiju prenesite cijelu tu mapu. Novi preseti dostupni su i
+nakon ponovnog pokretanja Livea; druge otvorene instance osvježavaju popis
+kad otvorite izbornik. Projekt sprema zvuk i naziv čak i ako preset datoteka
+na drugom računalu nije dostupna. Oštećene datoteke ne učitavaju se.
+
+Novi tvornički preseti:
+
+- Round Finger, Saw Punch, Triangle Pluck, Sine Weight.
+- Warm Circuit, Acid Snap, Long Slide, Dub Foundation.
+- Grit Bass, Hollow Motion, Tight Sequence, Poly Brass.
 
 ## Build u Visual Studiju 2026
 
@@ -99,6 +125,8 @@ tuning, MIDI, mono prioritet, sustain, polifoniju, razne sample rateove,
 spremanje novih razina, obnovu starih stanja i ponovno otvaranje editora.
 Provjeravaju i da su sve kontrole unutar prozora te da se međusobno ne
 preklapaju i da ih oznake ne zaklanjaju.
+Testovi User Presets provjeravaju spremanje, ponovno učitavanje, zamjenu,
+rad u novoj instanci, DAW recall, neispravne datoteke i odjeljke izbornika.
 Windows workflow stvara i provjerava VST3 ZIP i pripadajuće izvore.
 Ne preuzima Inno Setup i ne izrađuje instalacijski EXE.
 

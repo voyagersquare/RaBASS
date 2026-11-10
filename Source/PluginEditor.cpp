@@ -67,6 +67,11 @@ BassLookAndFeel::BassLookAndFeel()
     setColour(juce::TextButton::buttonColourId,juce::Colour{0xff173d52});
     setColour(juce::TextButton::textColourOffId,ink);
     setColour(juce::TextButton::textColourOnId,ink);
+    setColour(juce::AlertWindow::backgroundColourId,well);
+    setColour(juce::AlertWindow::textColourId,ink);
+    setColour(juce::TextEditor::backgroundColourId,well);
+    setColour(juce::TextEditor::textColourId,ink);
+    setColour(juce::TextEditor::outlineColourId,accent);
 }
 juce::Label* BassLookAndFeel::createSliderTextBox(juce::Slider& slider)
 {
@@ -218,11 +223,20 @@ RaBASSEditor::RaBASSEditor(RaBASSProcessor& p)
         level.slider.valueFromTextFunction=[](const juce::String& text) { return text.getDoubleValue()/100; };
         level.slider.updateText(); addAndMakeVisible(level.slider); setLabel(level.label,oscillatorNames[i]);
     }
-    mode.setName("VOICE MODE"); presets.setName("FACTORY PRESET");
+    mode.setName("VOICE MODE"); presets.setName("PRESETS");
     mode.addItemList({"Mono / legato","Poly / 8 voices"},1);
-    for (int i=0;i<p.getNumPrograms();++i) presets.addItem(p.getProgramName(i),i+1);
-    presets.setSelectedId(p.getCurrentProgram()+1,juce::dontSendNotification);
-    presets.onChange=[this] { processor.setCurrentProgram(presets.getSelectedId()-1); };
+    presets.beforePopup=[this] { refreshPresetMenu(); };
+    presets.onChange=[this]
+    {
+        const int id=presets.getSelectedId();
+        if (id>=1 && id<=processor.getNumPrograms()) processor.setCurrentProgram(id-1);
+        else if (juce::isPositiveAndBelow(id-1001,static_cast<int>(userPresets.size())))
+        {
+            const auto result=processor.loadUserPreset(userPresets[static_cast<size_t>(id-1001)].file);
+            if (result.failed()) { showPresetError(result.getErrorMessage()); refreshPresetMenu(); }
+        }
+    };
+    refreshPresetMenu();
     modeAttachment=std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(p.parameters,"mode",mode);
     addAndMakeVisible(mode); addAndMakeVisible(presets); setLabel(modeLabel,"VOICE MODE");
     keyboard.setName("MIDI KEYBOARD");
@@ -232,17 +246,23 @@ RaBASSEditor::RaBASSEditor(RaBASSProcessor& p)
     keyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId,accent.withAlpha(.65f)); addAndMakeVisible(keyboard);
     panic.setName("PANIC"); previousPreset.setName("PREVIOUS PRESET"); nextPreset.setName("NEXT PRESET");
     panic.onClick=[this] { processor.reset(); processor.keyboard.allNotesOff(0); };
-    previousPreset.onClick=[this] { presets.setSelectedId((processor.getCurrentProgram()+processor.getNumPrograms()-1)%processor.getNumPrograms()+1,juce::sendNotificationSync); };
-    nextPreset.onClick=[this] { presets.setSelectedId((processor.getCurrentProgram()+1)%processor.getNumPrograms()+1,juce::sendNotificationSync); };
-    for (auto* button : {&panic,&previousPreset,&nextPreset})
+    previousPreset.onClick=[this] { navigatePreset(-1); };
+    nextPreset.onClick=[this] { navigatePreset(1); };
+    savePreset.setName("SAVE PRESET"); savePreset.onClick=[this] { beginSavePreset(); };
+    for (auto* button : {&panic,&previousPreset,&nextPreset,&savePreset})
     { button->setWantsKeyboardFocus(false); addAndMakeVisible(button); }
     startTimerHz(24);
 }
-RaBASSEditor::~RaBASSEditor() { stopTimer(); setLookAndFeel(nullptr); }
+RaBASSEditor::~RaBASSEditor()
+{
+    stopTimer();
+    if (presetDialog!=nullptr) { presetDialog->setLookAndFeel(nullptr); presetDialog->exitModalState(0); }
+    setLookAndFeel(nullptr);
+}
 void RaBASSEditor::timerCallback()
 {
     displayedPeak=juce::jmax(processor.peak.exchange(0,std::memory_order_relaxed),displayedPeak*.85f);
-    presets.setSelectedId(processor.getCurrentProgram()+1,juce::dontSendNotification); repaint(972,504,128,46);
+    syncPresetSelection(); repaint(972,504,128,46);
 }
 void RaBASSEditor::paint(juce::Graphics& g)
 {
@@ -256,7 +276,7 @@ void RaBASSEditor::paint(juce::Graphics& g)
     g.setFont(juce::FontOptions(11.0f,juce::Font::bold)); g.setColour(muted);
     g.drawText("SUBTRACTIVE BASS SYNTH",248,25,330,18,juce::Justification::centredLeft);
     g.setColour(amber); g.setFont(juce::FontOptions(10.0f));
-    g.drawText("UI PREVIEW 01  /  v" JucePlugin_VersionString,248,49,330,18,juce::Justification::centredLeft);
+    g.drawText("UI PREVIEW 02  /  v" JucePlugin_VersionString,248,49,330,18,juce::Justification::centredLeft);
     drawPanel(g,{28,104,636,234},"BASS GENERATOR");
     drawPanel(g,{680,104,260,454},"FILTER MODULE");
     drawPanel(g,{956,104,156,454},"OUTPUT MODULE");
@@ -269,7 +289,7 @@ void RaBASSEditor::paint(juce::Graphics& g)
     g.drawText("FILTER ENVELOPE",696,323,228,18,juce::Justification::centred);
     g.drawText("12 dB / OCT",696,516,228,18,juce::Justification::centred);
     g.drawText("ENVELOPE SHAPING",45,380,580,18,juce::Justification::centredLeft);
-    g.drawText("MIDI IN  /  PITCH BEND +/- 2 ST",630,603,452,24,juce::Justification::centredRight);
+    g.drawText("MIDI IN  /  PITCH BEND +/- 2 ST",700,603,382,24,juce::Justification::centredRight);
     g.setColour(ink.withAlpha(.12f)); g.drawLine(328,145,328,316,1); g.drawLine(698,313,922,313,1);
     const auto meter=juce::jlimit(0.0f,1.0f,(juce::Decibels::gainToDecibels(displayedPeak,-60.0f)+60)/60);
     for (int segment=0;segment<14;++segment)
@@ -280,7 +300,7 @@ void RaBASSEditor::paint(juce::Graphics& g)
     g.setColour(muted); g.setFont(juce::FontOptions(9.0f));
     g.drawText("OUTPUT LEVEL",978,532,112,14,juce::Justification::centred);
     g.drawText("INDEPENDENT AUDIO",52,735,330,16,juce::Justification::centredLeft);
-    g.drawText("RaBASS  /  UI PREVIEW 01",780,735,308,16,juce::Justification::centredRight);
+    g.drawText("RaBASS  /  UI PREVIEW 02",780,735,308,16,juce::Justification::centredRight);
     drawScrew(g,22,24,.5f); drawScrew(g,1118,24,-.4f); drawScrew(g,22,736,-.35f); drawScrew(g,1118,736,.6f);
 }
 void RaBASSEditor::resized()
@@ -302,6 +322,7 @@ void RaBASSEditor::resized()
     for (size_t i=0;i<envelope.size();++i) dial(envelope[i],44+static_cast<int>(i)*122,404,112,120);
     dial(13,978,154,112,126); dial(11,978,338,112,126);
     modeLabel.setBounds(736,20,190,18); mode.setBounds(736,43,190,28); panic.setBounds(972,43,118,28);
-    presets.setBounds(50,602,460,28); previousPreset.setBounds(520,602,34,28); nextPreset.setBounds(564,602,34,28);
+    presets.setBounds(50,602,410,28); savePreset.setBounds(470,602,110,28);
+    previousPreset.setBounds(590,602,34,28); nextPreset.setBounds(634,602,34,28);
     keyboard.setBounds(52,656,1036,70);
 }

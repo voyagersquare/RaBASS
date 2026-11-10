@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(RaBASS VERSION 0.3.0 LANGUAGES C CXX)
+project(RaBASS VERSION 0.3.1 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(RABASS_DSP_ONLY "Build portable DSP tests without JUCE" OFF)
@@ -37,7 +37,7 @@ juce_add_plugin(RaBASS
     VST3_CATEGORIES Instrument Synth
     COPY_PLUGIN_AFTER_BUILD FALSE)
 juce_generate_juce_header(RaBASS)
-target_sources(RaBASS PRIVATE Source/PluginProcessor.cpp Source/PluginEditor.cpp)
+target_sources(RaBASS PRIVATE Source/PluginProcessor.cpp Source/PluginEditor.cpp Source/UserPresets.cpp Source/PresetBrowser.cpp)
 target_compile_definitions(RaBASS PUBLIC
     JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0
     JUCE_DISPLAY_SPLASH_SCREEN=0 JUCE_REPORT_APP_USAGE=0 JUCE_USE_MP3AUDIOFORMAT=0)
@@ -54,4 +54,11 @@ if(RABASS_BUILD_TESTS)
     target_link_libraries(RaBASSProcessorTests PRIVATE RaBASS)
     add_test(NAME bass-processor COMMAND RaBASSProcessorTests)
     set_tests_properties(bass-processor PROPERTIES TIMEOUT 45)
+    add_executable(RaBASSUserPresetTests Tests/UserPresetsTests.cpp)
+    target_include_directories(RaBASSUserPresetTests PRIVATE Source "${juce_SOURCE_DIR}/modules"
+        "${CMAKE_CURRENT_BINARY_DIR}/RaBASS_artefacts/JuceLibraryCode")
+    target_compile_definitions(RaBASSUserPresetTests PRIVATE JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1)
+    target_link_libraries(RaBASSUserPresetTests PRIVATE RaBASS)
+    add_test(NAME user-presets COMMAND RaBASSUserPresetTests)
+    set_tests_properties(user-presets PROPERTIES TIMEOUT 45)
 endif()

@@ -4,13 +4,25 @@
 namespace
 {
 struct Preset { const char* name; std::array<float,19> values; };
-constexpr std::array<Preset,6> presets {{
+constexpr std::array<Preset,18> presets {{
     {"01  Foundation", {0,0,.35f,7,.4f,700,.2f,3,.25f,.005f,.25f,.65f,.15f,.2f,.07f,-9, .75f,.2f,.15f}},
     {"02  Rubber",     {1,0,.25f,3,.3f,240,.55f,4.8f,.18f,.003f,.18f,.35f,.12f,.3f,.09f,-10, .25f,.65f,.1f}},
     {"03  Deep Sub",   {2,0,0,0,.95f,190,.05f,.4f,.5f,.012f,.4f,.85f,.3f,.08f,.12f,-6, 0,.15f,1}},
     {"04  Acid Line",  {0,0,.1f,1,.15f,450,.75f,5,.16f,.002f,.16f,.2f,.1f,.45f,.06f,-12, 1,0,0}},
     {"05  Detuned",    {0,0,.5f,18,.35f,1200,.3f,2,.4f,.008f,.4f,.7f,.22f,.35f,.15f,-11, .8f,.2f,.15f}},
-    {"06  Velvet Poly",{2,1,.4f,9,.25f,1800,.1f,1.5f,.6f,.035f,.55f,.6f,.65f,.12f,0,-12, 0,.85f,.3f}}
+    {"06  Velvet Poly",{2,1,.4f,9,.25f,1800,.1f,1.5f,.6f,.035f,.55f,.6f,.65f,.12f,0,-12, 0,.85f,.3f}},
+    {"07  Round Finger", {0,0,.08f,2,.45f,420,.12f,1.2f,.22f,.008f,.22f,.72f,.16f,.1f,.03f,-8, .1f,.85f,.25f}},
+    {"08  Saw Punch",    {0,0,.12f,4,.35f,950,.28f,4.2f,.1f,.001f,.14f,.32f,.09f,.38f,.025f,-10, 1,.1f,.1f}},
+    {"09  Triangle Pluck",{2,0,.2f,3,.3f,1600,.12f,2.5f,.12f,.002f,.12f,.12f,.11f,.12f,0,-8, 0,1,.2f}},
+    {"10  Sine Weight",  {0,0,0,0,.8f,260,.04f,.2f,.45f,.008f,.35f,.9f,.22f,.18f,.1f,-6, 0,0,1}},
+    {"11  Warm Circuit", {0,0,.3f,6,.5f,380,.4f,3.5f,.32f,.006f,.3f,.55f,.2f,.3f,.08f,-10, .7f,.4f,.15f}},
+    {"12  Acid Snap",    {0,0,.1f,0,.05f,660,.88f,5.2f,.09f,.001f,.09f,.15f,.06f,.55f,.045f,-13, 1,0,0}},
+    {"13  Long Slide",   {0,0,.35f,8,.7f,600,.2f,2.5f,.45f,.008f,.45f,.8f,.35f,.22f,.32f,-9, .5f,.4f,.5f}},
+    {"14  Dub Foundation",{2,0,.1f,2,.9f,200,.15f,.7f,.7f,.015f,.5f,.85f,.45f,.12f,.12f,-7, 0,.7f,.5f}},
+    {"15  Grit Bass",    {0,0,.45f,14,.25f,2200,.4f,1.5f,.22f,.003f,.2f,.65f,.13f,.8f,.06f,-14, 1,.25f,0}},
+    {"16  Hollow Motion",{2,0,.5f,11,.2f,1500,.6f,2.8f,.18f,.004f,.16f,.4f,.15f,.25f,.04f,-11, .4f,1,.2f}},
+    {"17  Tight Sequence",{0,0,.16f,3,.35f,800,.32f,3.8f,.07f,.001f,.08f,.08f,.045f,.28f,.012f,-9, .8f,.3f,.15f}},
+    {"18  Poly Brass",   {0,1,.45f,10,.2f,2800,.22f,3,.38f,.02f,.38f,.7f,.3f,.22f,0,-15, .8f,.5f,.1f}}
 }};
 }
 
@@ -49,9 +61,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout RaBASSProcessor::createLayou
     return layout;
 }
 
-RaBASSProcessor::RaBASSProcessor()
+RaBASSProcessor::RaBASSProcessor(juce::File presetFolder)
     : AudioProcessor(BusesProperties().withOutput("Output",juce::AudioChannelSet::stereo(),true)),
-      parameters(*this,nullptr,"RaBASSState",createLayout())
+      parameters(*this,nullptr,"RaBASSState",createLayout()),
+      userPresetFolder(presetFolder==juce::File{} ? defaultUserPresetFolder() : std::move(presetFolder))
 {
     for (size_t i=0;i<raw.size();++i) raw[i]=parameters.getRawParameterValue(parameterIds[i]);
 }
@@ -129,6 +142,7 @@ void RaBASSProcessor::setCurrentProgram(int index)
         if (auto* p=parameters.getParameter(parameterIds[i]))
         { p->beginChangeGesture(); p->setValueNotifyingHost(p->convertTo0to1(preset.values[i])); p->endChangeGesture(); }
     currentProgram=index;
+    setUserPresetName({});
     resetRequested=true;
 }
 void RaBASSProcessor::getStateInformation(juce::MemoryBlock& data)
@@ -136,6 +150,7 @@ void RaBASSProcessor::getStateInformation(juce::MemoryBlock& data)
     auto state=parameters.copyState();
     state.setProperty("schemaVersion",2,nullptr);
     state.setProperty("program",currentProgram.load(),nullptr);
+    state.setProperty("userPresetName",getCurrentUserPresetName(),nullptr);
     if (const auto xml=state.createXml()) copyXmlToBinary(*xml,data);
 }
 void RaBASSProcessor::setStateInformation(const void* data,int size)
@@ -166,6 +181,8 @@ void RaBASSProcessor::setStateInformation(const void* data,int size)
         }
         parameters.replaceState(state);
         currentProgram=juce::jlimit(0,getNumPrograms()-1,static_cast<int>(state.getProperty("program",0)));
+        const auto userName=state.getProperty("userPresetName").toString();
+        setUserPresetName(isValidUserPresetName(userName) ? userName : juce::String{});
         resetRequested=true;
     }
 }
