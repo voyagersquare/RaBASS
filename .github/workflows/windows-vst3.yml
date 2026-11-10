@@ -102,15 +102,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tag="v$RABASS_VERSION-ui-preview.2"
+          tag="v$RABASS_VERSION-ui-preview.3"
           cat > notes.md <<EOF
-          RaBASS $RABASS_VERSION — UI Preview 02: User Presets za Windows x64 / VST3.
+          RaBASS $RABASS_VERSION — Chrome Controls UI Preview 03 for Windows x64 / VST3.
 
-          SAVE PRESET dodan je uz preset izbornik. Spremite trenutni zvuk pod vlastitim nazivom; pojavit će se u odjeljku User presets. Tvornički zvukovi nalaze se pod Factory presets. Postojeći naziv može se zamijeniti tek nakon potvrde.
+          Smaller knob faces with a taller raised body, stronger directional cast shadows and polished chrome reflections. Slider handles and push buttons share the new chrome finish. Push buttons are narrower and slightly taller; the control spacing and comfortable drag areas are retained.
 
-          Dodano je 12 novih bass preseta, ukupno 18 tvorničkih kombinacija. Izvornih šest ostaje sačuvano. DSP engine i postojeće kontrole nisu mijenjani. Novi raspored preset reda provjeren je na preklapanje.
+          The sound engine, all 18 factory presets, Save Preset and the User presets library are unchanged from 0.3.1. This update changes the interface finish. Layout, state recall and user preset tests are included.
 
-          User preseti pohranjuju se u korisničku mapu Independent Audio/RaBASS/Presets unutar Windows AppData/Roaming. Dostupni su nakon ponovnog pokretanja i u drugim instancama plugina. DAW projekt sprema i odabrani naziv i zvuk.
+          User presets remain in Independent Audio/RaBASS/Presets under Windows AppData/Roaming. Replacing the VST3 bundle keeps that library available.
 
           Preuzmite RaBASS-$RABASS_VERSION-Windows-x64-VST3.zip i kopirajte cijelu mapu RaBASS.vst3 u C:\Program Files\Common Files\VST3. U Ableton Liveu 12 uključite VST3 system folders, kliknite Rescan i dodajte instrument na MIDI traku.
 
@@ -126,7 +126,7 @@ jobs:
           assert json.load(open('existing.json'))['isDraft'], 'This version is already published; bump the project version for a new release.'
           PY
           else
-            gh release create "$tag" --draft --prerelease --latest=false --target "$GITHUB_SHA" --title "RaBASS $RABASS_VERSION — User Presets Preview" --notes-file notes.md
+            gh release create "$tag" --draft --prerelease --latest=false --target "$GITHUB_SHA" --title "RaBASS $RABASS_VERSION — Chrome Controls Preview" --notes-file notes.md
           fi
           gh release upload "$tag" artifacts/build/packages/* artifacts/RaBASS-editor.png --clobber
           gh release edit "$tag" --draft=false --prerelease --notes-file notes.md --latest=false

@@ -1,11 +1,13 @@
-# RaBASS 0.3.1 — UI Preview 02: User Presets
+# RaBASS 0.3.2 — UI Preview 03: Chrome Controls
 
 **Subtractive synthesis bass synth** za Windows 10/11 x64, u **VST3** formatu.
 CMake projekt za Visual Studio 2026 i MIDI trake u Ableton Liveu 12.
 Isporuka je **prijenosni VST3 ZIP i izvorni projekt**, bez Windows instalera.
 
-Probni UI ima plavu brušenu metalnu podlogu, reljefne potenciometre,
-okomite klizače sa skalama i jasno odvojene module. Dimenzije su 1140 × 760.
+Probni UI ima plavu brušenu metalnu podlogu, manje kromirane potenciometre
+s višim reljefom i izraženijim sjenama, kromirane ručice klizača te uže i
+nešto više tipke. Dimenzije su 1140 × 760. Područja za povlačenje kontrola
+ostaju dovoljno velika za rad mišem.
 Oscilatori, filter, envelope, output i preseti imaju zaseban prostor.
 Izbornik preseta ima odjeljke **Factory presets** i **User presets**,
 tipku **SAVE PRESET** te tipke za prethodni/sljedeći preset.
@@ -50,8 +52,8 @@ Lijevi i desni kanal identični su radi centriranog basa.
 
 ## Preuzimanje i Ableton Live 12
 
-Preuzmite `RaBASS-0.3.1-Windows-x64-VST3.zip` iz
-[User Presets Preview izdanja](https://github.com/voyagersquare/RaBASS/releases/tag/v0.3.1-ui-preview.2).
+Preuzmite `RaBASS-0.3.2-Windows-x64-VST3.zip` iz
+[Chrome Controls Preview izdanja](https://github.com/voyagersquare/RaBASS/releases/tag/v0.3.2-ui-preview.3).
 Paket je dostupan i u **Actions → Windows VST3 → uspješan run → Artifacts**.
 Releases uključuje izvor RaBASS-a, odgovarajući JUCE source i `SHA256SUMS.txt`.
 
