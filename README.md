@@ -1,4 +1,4 @@
-# RaBASS 0.3.3 — UI Preview 04: Dark Red Chrome
+# RaBASS 0.3.4 — UI Preview 05: Fine Cutoff
 
 **Subtractive synthesis bass synth** za Windows 10/11 x64, u **VST3** formatu.
 CMake projekt za Visual Studio 2026 i MIDI trake u Ableton Liveu 12.
@@ -37,6 +37,15 @@ na 0 %, SUB i dalje može svirati; za potpunu tišinu spustite i SUB na 0 %.
 Razine miksera imaju kratko zaglađivanje, a zbroj iznad 100 % normalizira
 se radi prostora u izlaznom signalu.
 
+## Precizniji Filter Cutoff
+
+Cutoff se povlačenjem miša podešava četiri puta postupnije, a kotačićem
+miša deset puta finije. **Shift + kotačić** daje dodatnih deset puta manji
+pomak. Tipke sa strelicama mijenjaju cutoff za **1 Hz**, a uz Shift za
+**0,1 Hz**. Polje uvijek prikazuje Hz s jednom decimalom; za izravan unos
+možete upisati Hz ili kHz. Raspon 30–18000 Hz, mapiranje automatizacije,
+kratko DSP zaglađivanje i spremljeni preseti ostaju sačuvani.
+
 ## Ostale funkcije
 
 - Postojeći filter, resonance, filter envelope i njegov decay.
@@ -54,8 +63,8 @@ Lijevi i desni kanal identični su radi centriranog basa.
 
 ## Preuzimanje i Ableton Live 12
 
-Preuzmite `RaBASS-0.3.3-Windows-x64-VST3.zip` iz
-[Dark Red Chrome Preview izdanja](https://github.com/voyagersquare/RaBASS/releases/tag/v0.3.3-ui-preview.4).
+Preuzmite `RaBASS-0.3.4-Windows-x64-VST3.zip` iz
+[Fine Cutoff Preview izdanja](https://github.com/voyagersquare/RaBASS/releases/tag/v0.3.4-ui-preview.5).
 Paket je dostupan i u **Actions → Windows VST3 → uspješan run → Artifacts**.
 Releases uključuje izvor RaBASS-a, odgovarajući JUCE source i `SHA256SUMS.txt`.
 

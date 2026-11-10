@@ -102,13 +102,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tag="v$RABASS_VERSION-ui-preview.4"
+          tag="v$RABASS_VERSION-ui-preview.5"
           cat > notes.md <<EOF
-          RaBASS $RABASS_VERSION — Dark Red Chrome UI Preview 04 for Windows x64 / VST3.
+          RaBASS $RABASS_VERSION — Fine Cutoff UI Preview 05 for Windows x64 / VST3.
 
-          The blue panels are now dark red brushed metal, with matching burgundy menus, readouts and warm light labels. The compact raised chrome controls, stronger cast shadows and current layout are retained.
+          Filter Cutoff now responds four times more gradually to dragging and ten times more finely to the mouse wheel. Hold Shift while scrolling for another tenfold precision increase. Arrow keys adjust 1 Hz, or 0.1 Hz with Shift. The readout shows Hz with one decimal place; direct Hz and kHz entry are supported.
 
-          The sound engine, all 18 factory presets, Save Preset and the User presets library are unchanged. This update changes the interface colours. Layout, state recall and user preset tests are included.
+          The dark red chrome interface, 30-18000 Hz cutoff range, existing automation mapping, DSP smoothing and all 18 factory presets are retained. Cutoff drag, wheel, keyboard, automation gesture, state recall and user preset tests are included.
 
           User presets remain in Independent Audio/RaBASS/Presets under Windows AppData/Roaming. Replacing the VST3 bundle keeps that library available.
 
@@ -126,7 +126,7 @@ jobs:
           assert json.load(open('existing.json'))['isDraft'], 'This version is already published; bump the project version for a new release.'
           PY
           else
-            gh release create "$tag" --draft --prerelease --latest=false --target "$GITHUB_SHA" --title "RaBASS $RABASS_VERSION — Dark Red Chrome Preview" --notes-file notes.md
+            gh release create "$tag" --draft --prerelease --latest=false --target "$GITHUB_SHA" --title "RaBASS $RABASS_VERSION — Fine Cutoff Preview" --notes-file notes.md
           fi
           gh release upload "$tag" artifacts/build/packages/* artifacts/RaBASS-editor.png --clobber
           gh release edit "$tag" --draft=false --prerelease --notes-file notes.md --latest=false

@@ -18,6 +18,15 @@ public:
     std::function<void()> beforePopup;
     void showPopup() override { if (beforePopup) beforePopup(); juce::ComboBox::showPopup(); }
 };
+class BassSlider final : public juce::Slider
+{
+public:
+    void enableFineCutoff() { fineCutoff=true; setMouseDragSensitivity(1000); }
+    void mouseWheelMove(const juce::MouseEvent&,const juce::MouseWheelDetails&) override;
+    bool keyPressed(const juce::KeyPress&) override;
+private:
+    bool fineCutoff=false;
+};
 class RaBASSEditor final : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
@@ -28,7 +37,7 @@ public:
 private:
     struct Dial
     {
-        juce::Slider slider;
+        BassSlider slider;
         juce::Label label;
         std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attachment;
     };

@@ -215,6 +215,32 @@ void BassLookAndFeel::drawButtonText(juce::Graphics& g,juce::TextButton& button,
     g.setColour(juce::Colour{0xff061521});
     g.drawFittedText(button.getButtonText(),textBounds,juce::Justification::centred,1,.8f);
 }
+void BassSlider::mouseWheelMove(const juce::MouseEvent& event,const juce::MouseWheelDetails& wheel)
+{
+    auto adjusted=wheel;
+    if (fineCutoff)
+    {
+        const float scale=event.mods.isShiftDown() ? .01f : .1f;
+        adjusted.deltaX*=scale; adjusted.deltaY*=scale;
+    }
+    // Keep JUCE's wheel direction, trackpad handling and host automation gestures.
+    juce::Slider::mouseWheelMove(event,adjusted);
+}
+bool BassSlider::keyPressed(const juce::KeyPress& key)
+{
+    const int code=key.getKeyCode();
+    if (fineCutoff && isEnabled() && !key.getModifiers().isCtrlDown()
+        && !key.getModifiers().isAltDown() && !key.getModifiers().isCommandDown()
+        && (code==juce::KeyPress::upKey || code==juce::KeyPress::rightKey
+            || code==juce::KeyPress::downKey || code==juce::KeyPress::leftKey))
+    {
+        const double direction=(code==juce::KeyPress::upKey || code==juce::KeyPress::rightKey) ? 1.0 : -1.0;
+        const juce::Slider::ScopedDragNotification gesture(*this);
+        setValue(getValue()+direction*(key.getModifiers().isShiftDown() ? .1 : 1.0),juce::sendNotificationSync);
+        return true;
+    }
+    return juce::Slider::keyPressed(key);
+}
 RaBASSEditor::RaBASSEditor(RaBASSProcessor& p)
     : AudioProcessorEditor(p), processor(p), keyboard(p.keyboard,juce::MidiKeyboardComponent::horizontalKeyboard), metalSurface(createMetalSurface())
 {
@@ -236,10 +262,15 @@ RaBASSEditor::RaBASSEditor(RaBASSProcessor& p)
         configureReadout(dial.slider);
         dial.slider.setPopupDisplayEnabled(false,false,nullptr);
         dial.slider.setTooltip(processor.parameters.getParameter(id)->getName(64)+". Double-click to reset.");
+        if (id=="cutoff")
+        {
+            dial.slider.enableFineCutoff();
+            dial.slider.setTooltip("Filter cutoff. Drag for gradual adjustment; Shift + mouse wheel for extra precision. Arrow keys: 1 Hz; Shift + arrow: 0.1 Hz. Type Hz or kHz in the value box. Double-click to reset.");
+        }
         dial.attachment=std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processor.parameters,id,dial.slider);
         dial.slider.textFromValueFunction=[id](double v)
         {
-            if (id=="cutoff") return v>=1000 ? juce::String(v/1000,2)+" kHz" : juce::String(v,0)+" Hz";
+            if (id=="cutoff") return juce::String(v,1)+" Hz";
             if (id=="detune") return juce::String(v,1)+" ct";
             if (id=="filterEnv") return juce::String(v,1)+" oct";
             if (id=="output") return juce::String(v,1)+" dB";
@@ -323,7 +354,7 @@ void RaBASSEditor::paint(juce::Graphics& g)
     g.setFont(juce::FontOptions(11.0f,juce::Font::bold)); g.setColour(muted);
     g.drawText("SUBTRACTIVE BASS SYNTH",248,25,330,18,juce::Justification::centredLeft);
     g.setColour(amber); g.setFont(juce::FontOptions(10.0f));
-    g.drawText("UI PREVIEW 04  /  v" JucePlugin_VersionString,248,49,330,18,juce::Justification::centredLeft);
+    g.drawText("UI PREVIEW 05  /  v" JucePlugin_VersionString,248,49,330,18,juce::Justification::centredLeft);
     drawPanel(g,{28,104,636,234},"BASS GENERATOR");
     drawPanel(g,{680,104,260,454},"FILTER MODULE");
     drawPanel(g,{956,104,156,454},"OUTPUT MODULE");
@@ -347,7 +378,7 @@ void RaBASSEditor::paint(juce::Graphics& g)
     g.setColour(muted); g.setFont(juce::FontOptions(9.0f));
     g.drawText("OUTPUT LEVEL",978,532,112,14,juce::Justification::centred);
     g.drawText("INDEPENDENT AUDIO",52,735,330,16,juce::Justification::centredLeft);
-    g.drawText("RaBASS  /  UI PREVIEW 04",780,735,308,16,juce::Justification::centredRight);
+    g.drawText("RaBASS  /  UI PREVIEW 05",780,735,308,16,juce::Justification::centredRight);
     drawScrew(g,22,24,.5f); drawScrew(g,1118,24,-.4f); drawScrew(g,22,736,-.35f); drawScrew(g,1118,736,.6f);
 }
 void RaBASSEditor::resized()
