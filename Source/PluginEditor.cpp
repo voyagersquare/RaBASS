@@ -49,8 +49,12 @@ RaBASSEditor::RaBASSEditor(RaBASSProcessor& p)
         dial.slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         dial.slider.setTextBoxStyle(juce::Slider::TextBoxBelow,false,94,22);
         dial.slider.setColour(juce::Slider::rotarySliderFillColourId,i>=11 ? amber : accent);
+        dial.slider.setColour(juce::Slider::textBoxTextColourId,ink);
+        dial.slider.setColour(juce::Slider::textBoxBackgroundColourId,juce::Colours::transparentBlack);
+        dial.slider.setColour(juce::Slider::textBoxOutlineColourId,juce::Colours::transparentBlack);
         dial.slider.setPopupDisplayEnabled(false,false,nullptr);
         dial.slider.setTooltip(processor.parameters.getParameter(id)->getName(64)+". Double-click to reset.");
+        dial.attachment=std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processor.parameters,id,dial.slider);
         dial.slider.textFromValueFunction=[id](double v)
         {
             if (id=="cutoff") return v>=1000 ? juce::String(v/1000,2)+" kHz" : juce::String(v,0)+" Hz";
@@ -70,7 +74,6 @@ RaBASSEditor::RaBASSEditor(RaBASSProcessor& p)
             if (id=="mix" || id=="sub" || id=="resonance" || id=="sustain" || id=="drive") return value/100;
             return value;
         };
-        dial.attachment=std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processor.parameters,id,dial.slider);
         dial.label.setText(labels[i],juce::dontSendNotification);
         dial.label.setFont(juce::FontOptions(11.0f,juce::Font::bold));
         dial.label.setColour(juce::Label::textColourId,muted);
@@ -127,7 +130,7 @@ void RaBASSEditor::paint(juce::Graphics& g)
     g.setColour(displayedPeak>.95f ? amber : accent);
     const auto meter=juce::jlimit(0.0f,1.0f,(juce::Decibels::gainToDecibels(displayedPeak,-60.0f)+60)/60);
     g.fillRoundedRectangle(824,52,150*meter,7,3);
-    g.setColour(muted); g.drawText("MIDI IN  /  PITCH BEND ±2",26,516,400,20,juce::Justification::centredLeft);
+    g.setColour(muted); g.drawText("MIDI IN  /  PITCH BEND +/- 2 ST",26,516,400,20,juce::Justification::centredLeft);
     g.drawText("Independent Audio",764,612,210,18,juce::Justification::centredRight);
 }
 void RaBASSEditor::resized()

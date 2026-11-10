@@ -40,6 +40,7 @@ int main(int argc,char** argv)
     }
     p.reset(); p.processBlock(audio,midi);
     require(audio.getMagnitude(0,512)==0,"host reset clears sound");
+    p.setCurrentProgram(0);
     for (int i=0;i<3;++i)
     {
         std::unique_ptr<juce::AudioProcessorEditor> editor(p.createEditor());
