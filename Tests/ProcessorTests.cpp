@@ -1,6 +1,7 @@
 #include "PluginProcessor.h"
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 
 static void require(bool condition,const char* message)
 {
@@ -69,7 +70,26 @@ int main(int argc,char** argv)
     for (int i=0;i<3;++i)
     {
         std::unique_ptr<juce::AudioProcessorEditor> editor(p.createEditor());
-        require(editor && editor->getWidth()==1000 && editor->getHeight()==640,"editor opens and reopens");
+        require(editor && editor->getWidth()==1140 && editor->getHeight()==760,"preview editor opens and reopens");
+        std::vector<juce::Component*> controls;
+        std::vector<juce::Component*> labels;
+        for (auto* child : editor->getChildren())
+        {
+            if (!child->isVisible()) continue;
+            if (dynamic_cast<juce::Slider*>(child) || dynamic_cast<juce::ComboBox*>(child)
+                || dynamic_cast<juce::TextButton*>(child) || dynamic_cast<juce::MidiKeyboardComponent*>(child))
+                controls.push_back(child);
+            else if (dynamic_cast<juce::Label*>(child)) labels.push_back(child);
+        }
+        require(controls.size()==23,"all synth, preset and keyboard controls are present");
+        for (size_t control=0;control<controls.size();++control)
+        {
+            require(editor->getLocalBounds().reduced(16).contains(controls[control]->getBounds()),"control stays inside the editor");
+            for (size_t other=control+1;other<controls.size();++other)
+                require(!controls[control]->getBounds().intersects(controls[other]->getBounds()),"interactive controls never overlap");
+            for (auto* label : labels)
+                require(!controls[control]->getBounds().intersects(label->getBounds()),"labels do not cover interactive controls");
+        }
         if (i==0 && argc>1)
         {
             auto image=editor->createComponentSnapshot(editor->getLocalBounds(),true,1.0f);

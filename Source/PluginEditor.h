@@ -6,6 +6,10 @@ class BassLookAndFeel final : public juce::LookAndFeel_V4
 public:
     BassLookAndFeel();
     void drawRotarySlider(juce::Graphics&,int,int,int,int,float,float,float,juce::Slider&) override;
+    void drawLinearSlider(juce::Graphics&,int,int,int,int,float,float,float,juce::Slider::SliderStyle,juce::Slider&) override;
+    void drawComboBox(juce::Graphics&,int,int,bool,int,int,int,int,juce::ComboBox&) override;
+    void drawButtonBackground(juce::Graphics&,juce::Button&,const juce::Colour&,bool,bool) override;
+    juce::Label* createSliderTextBox(juce::Slider&) override;
 };
 class RaBASSEditor final : public juce::AudioProcessorEditor, private juce::Timer
 {
@@ -27,10 +31,12 @@ private:
     std::array<Dial,14> dials;
     std::array<Dial,3> oscillatorLevels;
     juce::ComboBox mode, presets;
-    juce::Label modeLabel, presetLabel;
+    juce::Label modeLabel;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> modeAttachment;
     juce::MidiKeyboardComponent keyboard;
     juce::TextButton panic{"PANIC"};
+    juce::TextButton previousPreset{"<"}, nextPreset{">"};
+    juce::Image metalSurface;
     float displayedPeak=0;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RaBASSEditor)
 };

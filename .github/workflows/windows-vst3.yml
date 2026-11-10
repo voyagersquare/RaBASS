@@ -102,15 +102,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tag="v$RABASS_VERSION"
+          tag="v$RABASS_VERSION-ui-preview.1"
           cat > notes.md <<EOF
-          RaBASS $RABASS_VERSION — subtractive bass synth za Windows x64 / VST3.
+          RaBASS $RABASS_VERSION — UI Preview 01 za Windows x64 / VST3.
 
-          Sawtooth, Triangle i Sine imaju zasebne razine i mogu se slobodno miješati prije postojećeg low-pass filtera. Sub, BLEND/DETUNE, ADSR, filter envelope, drive, glide, mono/poly, šest preseta i ostale kontrole ostaju dostupni.
+          Probno sučelje s plavom brušenom metalnom podlogom, reljefnim potenciometrima, okomitim klizačima, odvojenim modulima i upravljanjem presetima. Sve kontrole imaju zaseban prostor; automatske provjere pokrivaju preklapanje i granice kontrola. Dimenzije: 1140 x 760.
+
+          Zvuk, parametri, tri vala, preseti i spremanje stanja ostaju kao u 0.2.0. DSP engine nije mijenjan. Ova je verzija namijenjena isprobavanju izgleda i rasporeda.
 
           Preuzmite RaBASS-$RABASS_VERSION-Windows-x64-VST3.zip i kopirajte cijelu mapu RaBASS.vst3 u C:\Program Files\Common Files\VST3. U Ableton Liveu 12 uključite VST3 system folders, kliknite Rescan i dodajte instrument na MIDI traku.
 
-          Isporuka je prijenosni VST3 ZIP s izvorima i SHA256 provjerama, bez Windows instalera. Projekti iz 0.1.0 učitavaju ostale parametre; stari Pulse zamjenjuje se približnim saw/triangle miksom. Automatizacija novog miksera koristi tri zasebna parametra.
+          Isporuka je prijenosni VST3 ZIP s izvorima i SHA256 provjerama, bez Windows instalera. Stabilna verzija 0.2.0 ostaje dostupna: https://github.com/$GH_REPO/releases/tag/v0.2.0
 
           Provjereni Windows build i testovi: https://github.com/$GH_REPO/actions/runs/$GITHUB_RUN_ID
 
@@ -122,7 +124,7 @@ jobs:
           assert json.load(open('existing.json'))['isDraft'], 'This version is already published; bump the project version for a new release.'
           PY
           else
-            gh release create "$tag" --draft --target "$GITHUB_SHA" --title "RaBASS $RABASS_VERSION — Subtractive Bass VST3" --notes-file notes.md
+            gh release create "$tag" --draft --prerelease --latest=false --target "$GITHUB_SHA" --title "RaBASS $RABASS_VERSION — UI Preview 01" --notes-file notes.md
           fi
           gh release upload "$tag" artifacts/build/packages/* artifacts/RaBASS-editor.png --clobber
-          gh release edit "$tag" --draft=false --notes-file notes.md --latest
+          gh release edit "$tag" --draft=false --prerelease --notes-file notes.md --latest=false

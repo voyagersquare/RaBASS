@@ -1,8 +1,16 @@
-# RaBASS 0.2.0
+# RaBASS 0.3.0 — UI Preview 01
 
 **Subtractive synthesis bass synth** za Windows 10/11 x64, u **VST3** formatu.
 CMake projekt za Visual Studio 2026 i MIDI trake u Ableton Liveu 12.
 Isporuka je **prijenosni VST3 ZIP i izvorni projekt**, bez Windows instalera.
+
+Probni UI ima plavu brušenu metalnu podlogu, reljefne potenciometre,
+okomite klizače sa skalama i jasno odvojene module. Dimenzije su 1140 × 760.
+Oscilatori, filter, envelope, output i preseti imaju zaseban prostor.
+Izbornik preseta ima i tipke za prethodni/sljedeći preset.
+Zvuk i parametri ostaju kao u 0.2.0; DSP engine nije mijenjan.
+Prethodna [stabilna verzija 0.2.0](https://github.com/voyagersquare/RaBASS/releases/tag/v0.2.0)
+ostaje dostupna dok isprobavamo novi izgled.
 
 ![RaBASS instrument](Assets/RaBASS-editor.png)
 
@@ -40,8 +48,8 @@ Lijevi i desni kanal identični su radi centriranog basa.
 
 ## Preuzimanje i Ableton Live 12
 
-Preuzmite `RaBASS-0.2.0-Windows-x64-VST3.zip` iz
-[Releases](https://github.com/voyagersquare/RaBASS/releases/latest).
+Preuzmite `RaBASS-0.3.0-Windows-x64-VST3.zip` iz
+[UI Preview izdanja](https://github.com/voyagersquare/RaBASS/releases/tag/v0.3.0-ui-preview.1).
 Paket je dostupan i u **Actions → Windows VST3 → uspješan run → Artifacts**.
 Releases uključuje izvor RaBASS-a, odgovarajući JUCE source i `SHA256SUMS.txt`.
 
@@ -89,6 +97,8 @@ stara automatizacija izbora Waveform više ne upravlja timbrom.
 Testovi pokrivaju svaki val samostalno, njihov miks, mutiranje, zasebni sub,
 tuning, MIDI, mono prioritet, sustain, polifoniju, razne sample rateove,
 spremanje novih razina, obnovu starih stanja i ponovno otvaranje editora.
+Provjeravaju i da su sve kontrole unutar prozora te da se međusobno ne
+preklapaju i da ih oznake ne zaklanjaju.
 Windows workflow stvara i provjerava VST3 ZIP i pripadajuće izvore.
 Ne preuzima Inno Setup i ne izrađuje instalacijski EXE.
 

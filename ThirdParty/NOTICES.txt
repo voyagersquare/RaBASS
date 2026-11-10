@@ -1,4 +1,4 @@
-RaBASS 0.2.0
+RaBASS 0.3.0 UI Preview 01
 Original RaBASS code: CC0-1.0; see LICENSE.
 The combined JUCE-based plugin uses JUCE's AGPLv3 open-source option.
 CC0 does not replace the licence terms of JUCE or its dependencies.
