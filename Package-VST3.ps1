@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([switch]$SkipBuild, [string]$OutputDirectory)
+param([switch]$SkipBuild, [switch]$StageOnly, [string]$OutputDirectory)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 if ($env:OS -ne 'Windows_NT') { throw 'Package the Windows VST3 on Windows.' }
@@ -67,6 +67,10 @@ foreach ($relative in @('modules/juce_graphics/image_formats/jpglib/README','mod
     $destination = Join-Path (Join-Path $stage 'Licenses\JUCE') $relative
     New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $juce $relative) -Destination $destination
+}
+if ($StageOnly) {
+    Write-Host "VERIFIED VST3 STAGE READY: $stage"
+    return
 }
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $portable = Join-Path $OutputDirectory "RaBASS-$version-Windows-x64-VST3.zip"

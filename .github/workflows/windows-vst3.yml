@@ -1,4 +1,4 @@
-name: Windows VST3
+name: Windows VST3 installer
 on:
   workflow_dispatch:
   push:
@@ -12,6 +12,8 @@ on:
       - 'CMakePresets.json'
       - 'Build-Windows.cmd'
       - 'Package-VST3.ps1'
+      - 'Build-Installer.cmd'
+      - 'Installer/**'
       - '.github/workflows/windows-vst3.yml'
   pull_request:
 permissions:
@@ -22,11 +24,20 @@ concurrency:
 jobs:
   build-test-package:
     runs-on: windows-2025
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Validate Windows installer scripts
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Get-ChildItem .\Installer\*.ps1, .\Package-VST3.ps1 | ForEach-Object {
+            $tokens = $null; $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors)
+            if ($errors.Count -ne 0) { throw ($errors | Out-String) }
+          }
       - name: Build x64 VST3 and run tests
         shell: powershell
         run: |
@@ -37,13 +48,22 @@ jobs:
         run: |
           & .\build\windows-x64\RaBASSProcessorTests.exe RaBASS-editor.png
           if ($LASTEXITCODE -ne 0) { throw 'Editor validation failed.' }
-      - name: Package portable VST3 and corresponding source
+      - name: Install pinned Inno Setup compiler
         shell: powershell
-        run: .\Package-VST3.ps1 -SkipBuild
-      - name: Upload portable VST3 and source
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $setup = Join-Path $env:RUNNER_TEMP 'innosetup-6.7.4.exe'
+          Invoke-WebRequest 'https://github.com/jrsoftware/issrc/releases/download/is-6_7_4/innosetup-6.7.4.exe' -OutFile $setup
+          if ((Get-FileHash $setup -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'a549929319f9120716677c685535ca4671e4b937b5fdc87e2585f32d8eb30e8c') { throw 'Inno Setup checksum mismatch.' }
+          $process = Start-Process -FilePath $setup -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-' -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw 'Inno Setup installation failed.' }
+      - name: Build installer and test install, upgrade and uninstall
+        shell: powershell
+        run: .\Installer\Build-Installer.ps1 -SkipBuild -SmokeTest
+      - name: Upload tested VST3 installer and source
         uses: actions/upload-artifact@v4
         with:
-          name: RaBASS-Windows-x64-VST3
+          name: RaBASS-Windows-x64-Installer
           path: |
             build/packages/*
             RaBASS-editor.png
@@ -54,7 +74,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: RaBASS-test-diagnostics
-          path: build/windows-x64/Testing/Temporary/LastTest.log
+          path: |
+            build/windows-x64/Testing/Temporary/LastTest.log
+            ${{ runner.temp }}/RaBASS-install-*.log
           if-no-files-found: ignore
   publish:
     needs: build-test-package
@@ -70,7 +92,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: RaBASS-Windows-x64-VST3
+          name: RaBASS-Windows-x64-Installer
           path: artifacts
       - name: Verify packages and source provenance
         id: package
@@ -90,11 +112,16 @@ jobs:
               assert hashlib.sha256((root/name).read_bytes()).hexdigest()==expected
           with zipfile.ZipFile(root/'RaBASS-Source.zip') as z:
               assert z.comment.decode()==os.environ['GITHUB_SHA']
-          with zipfile.ZipFile(root/f'RaBASS-{version}-Windows-x64-VST3.zip') as z:
-              assert not any(name.lower().endswith('.exe') for name in z.namelist())
-              data=z.read('RaBASS.vst3/Contents/x86_64-win/RaBASS.vst3')
-              pe=struct.unpack_from('<I',data,0x3c)[0]
-              assert data[pe:pe+4]==b'PE\0\0' and struct.unpack_from('<H',data,pe+4)[0]==0x8664
+          assert info['format']=='VST3' and info['standalone'] is False
+          data=(root/f'RaBASS-{version}-Windows-x64-Setup.exe').read_bytes()
+          pe=struct.unpack_from('<I',data,0x3c)[0]
+          assert data[:2]==b'MZ' and data[pe:pe+4]==b'PE\0\0'
+          report=json.loads((root/'installer-test-results.json').read_text(encoding='utf-8-sig'))
+          assert report['version']==version and report['format']=='VST3'
+          assert all(report['checks'][name] is True for name in ('freshInstall','installedBundleChecksums','reinstall','portableUpgrade','installedAppsRegistration','vst3Only','uninstall','userPresetsPreserved'))
+          expected={f'RaBASS-{version}-Windows-x64-Setup.exe','RaBASS-Source.zip','JUCE-8.0.6-Source.zip','installer-test-results.json'}
+          assert set(info['files'])==expected
+          assert {p.name for p in root.iterdir()}==expected|{'release-info.json','SHA256SUMS.txt'}
           with open(os.environ['GITHUB_OUTPUT'],'a') as f: f.write('version='+version+'\n')
           PY
       - name: Publish VST3 release
@@ -103,23 +130,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tag="v$RABASS_VERSION-ui-preview.7"
+          tag="v$RABASS_VERSION-installer-preview.1"
           cat > notes.md <<EOF
-          RaBASS $RABASS_VERSION — Floppy Save Icon UI Preview 07 for Windows x64 / VST3.
+          RaBASS $RABASS_VERSION — Windows VST3 Installer Preview.
 
-          The Save Preset text button is now a compact chrome button with a floppy-disk icon inspired by the supplied reference. The embedded vector icon has a blue-grey body, pale shutter, coral tab and white label. The button retains its Save user preset tooltip, accessible name and existing save dialog.
+          Standard Windows Setup.exe wizard for the VST3 bass instrument. The complete x64 VST3 bundle installs to C:\Program Files\Common Files\VST3\RaBASS.vst3. Remove it through Windows Settings > Apps > Installed apps > RaBASS.
 
-          The RaBass script logo, dark red chrome controls, fine cutoff adjustment, existing automation mapping and all 18 factory presets are retained. Editor layout, cutoff control, state recall and user preset save-dialog tests are included.
+          VST3 instrument only: no standalone application, desktop shortcut or Start menu app. The RaBass script logo, floppy-disk Save Preset button, dark red chrome controls, fine cutoff adjustment and all 18 factory presets are included.
 
-          User presets remain in Independent Audio/RaBASS/Presets under Windows AppData/Roaming. Replacing the VST3 bundle keeps that library available.
+          Presets in AppData/Roaming/Independent Audio/RaBASS/Presets are preserved during installation and uninstall. The original RaBASS installer identity is retained for upgrades.
 
-          Preuzmite RaBASS-$RABASS_VERSION-Windows-x64-VST3.zip i kopirajte cijelu mapu RaBASS.vst3 u C:\Program Files\Common Files\VST3. U Ableton Liveu 12 uključite VST3 system folders, kliknite Rescan i dodajte instrument na MIDI traku.
+          Preuzmite RaBASS-$RABASS_VERSION-Windows-x64-Setup.exe, zatvorite Ableton Live i pokrenite instaler. U Liveu uključite VST3 system folders, kliknite Rescan i dodajte RaBASS na MIDI traku. Na odredišnom računalu nisu potrebni Visual Studio ni dodatni runtime download.
 
-          Isporuka je prijenosni VST3 ZIP s izvorima i SHA256 provjerama, bez Windows instalera. Stabilna verzija 0.2.0 ostaje dostupna: https://github.com/$GH_REPO/releases/tag/v0.2.0
+          Windows checks cover fresh installation, installed bundle checksums, reinstallation, replacing an existing portable VST3, Installed apps registration, absence of standalone binaries, uninstall and user preset preservation. See installer-test-results.json and https://github.com/$GH_REPO/actions/runs/$GITHUB_RUN_ID
 
-          Provjereni Windows build i testovi: https://github.com/$GH_REPO/actions/runs/$GITHUB_RUN_ID
-
-          Izvorni RaBASS kod: CC0-1.0. Kombinirani JUCE plugin koristi JUCE-ovu AGPLv3 opciju i pripadajuće licence. Arhive izvora RaBASS-a i JUCE-a priložene su uz plugin. Završna provjera u stvarnom Ableton Liveu 12 ostaje na korisnikovom Windows računalu.
+          Corresponding RaBASS and JUCE source archives, licences and SHA256 checks accompany the installer. Original RaBASS code: CC0-1.0. The combined JUCE plugin uses JUCE's AGPLv3 option. Final host-specific testing in Ableton Live 12 takes place on the user's Windows computer.
           EOF
           if gh release view "$tag" --json isDraft > existing.json 2>/dev/null; then
             python3 - <<'PY'
@@ -127,7 +152,7 @@ jobs:
           assert json.load(open('existing.json'))['isDraft'], 'This version is already published; bump the project version for a new release.'
           PY
           else
-            gh release create "$tag" --draft --prerelease --latest=false --target "$GITHUB_SHA" --title "RaBASS $RABASS_VERSION — Floppy Save Icon Preview" --notes-file notes.md
+            gh release create "$tag" --draft --prerelease --latest=false --target "$GITHUB_SHA" --title "RaBASS $RABASS_VERSION — Windows VST3 Installer" --notes-file notes.md
           fi
           gh release upload "$tag" artifacts/build/packages/* artifacts/RaBASS-editor.png --clobber
           gh release edit "$tag" --draft=false --prerelease --notes-file notes.md --latest=false

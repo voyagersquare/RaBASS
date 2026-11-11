@@ -1,0 +1,23 @@
+RaBASS - Bass Instrument for Windows 10/11 x64 (VST3 only)
+
+Close Ableton Live and other DAWs before installing or updating.
+Setup installs the complete VST3 bundle to the standard system location:
+C:\Program Files\Common Files\VST3\RaBASS.vst3
+
+This is a plugin instrument. No standalone application, desktop shortcut or
+Start menu application is installed. Use RaBASS on a MIDI track in a DAW.
+
+Ableton Live 12:
+1. Open Settings > Plug-Ins.
+2. Enable Use VST3 Plug-In System Folders, then click Rescan.
+3. Find RaBASS in Plug-Ins and drag it onto a MIDI track.
+4. Arm the track or create a MIDI clip to play the instrument.
+
+Setup supports updating an existing RaBASS VST3 installation.
+User presets remain in %APPDATA%\Independent Audio\RaBASS\Presets.
+Remove the plugin using Windows Settings > Apps > Installed apps > RaBASS.
+Uninstall removes the plugin and its installation files, preserving user presets.
+
+An administrator account is required. No Visual Studio, additional runtime
+download or internet connection is needed on the destination computer.
+Corresponding RaBASS and JUCE source archives accompany the installer release.

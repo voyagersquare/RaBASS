@@ -1,8 +1,9 @@
-# RaBASS 0.3.6 — UI Preview 07: Floppy Save Icon
+# RaBASS 0.3.7 — Windows VST3 Installer
 
 **Subtractive synthesis bass synth** za Windows 10/11 x64, u **VST3** formatu.
 CMake projekt za Visual Studio 2026 i MIDI trake u Ableton Liveu 12.
-Isporuka je **prijenosni VST3 ZIP i izvorni projekt**, bez Windows instalera.
+Isporuka je **standardni Windows Setup.exe instaler za VST3** i izvorni projekt.
+Instalira se samo VST3 instrument, bez standalone aplikacije.
 
 Probni UI ima tamnocrvenu brušenu metalnu podlogu, manje kromirane potenciometre
 s višim reljefom i izraženijim sjenama, kromirane ručice klizača te uže i
@@ -67,21 +68,32 @@ Lijevi i desni kanal identični su radi centriranog basa.
 
 ## Preuzimanje i Ableton Live 12
 
-Preuzmite `RaBASS-0.3.6-Windows-x64-VST3.zip` iz
-[Floppy Save Icon Preview izdanja](https://github.com/voyagersquare/RaBASS/releases/tag/v0.3.6-ui-preview.7).
-Paket je dostupan i u **Actions → Windows VST3 → uspješan run → Artifacts**.
-Releases uključuje izvor RaBASS-a, odgovarajući JUCE source i `SHA256SUMS.txt`.
+Preuzmite `RaBASS-0.3.7-Windows-x64-Setup.exe` iz
+[Windows VST3 Installer izdanja](https://github.com/voyagersquare/RaBASS/releases/tag/v0.3.7-installer-preview.1).
+Paket je dostupan i u **Actions → Windows VST3 installer → uspješan run → Artifacts**.
+Releases uključuje izvore RaBASS-a i JUCE-a, `SHA256SUMS.txt` i rezultate
+provjere instalacije u `installer-test-results.json`.
 
-1. Zatvorite Live i raspakirajte ZIP.
-2. Kopirajte **cijelu mapu** `RaBASS.vst3` u
+1. Zatvorite Ableton Live i ostale DAW aplikacije.
+2. Pokrenite **Setup.exe**, potvrdite administratorsko odobrenje i dovršite
+   standardni čarobnjak za instalaciju.
+3. Instaler postavlja cijelu mapu `RaBASS.vst3` u
    `C:\Program Files\Common Files\VST3\RaBASS.vst3`.
-3. U Liveu otvorite Settings → Plug-Ins i uključite
+4. U Liveu otvorite Settings → Plug-Ins i uključite
    **Use VST3 Plug-In System Folders**.
-4. Kliknite **Rescan**, pronađite RaBASS i dodajte ga na **MIDI traku**.
+5. Kliknite **Rescan**, pronađite RaBASS i dodajte ga na **MIDI traku**.
 
-Nemojte kopirati samo unutarnji modul iz mape `Contents`.
-Pri nadogradnji zamijenite cijelu staru mapu `RaBASS.vst3`.
-Na odredišnom računalu nisu potrebni Visual Studio ni dodatni runtime download.
+Instaler podržava nadogradnju postojeće ručno kopirane VST3 verzije i
+zadržava izvorni identitet RaBASS Windows instalacije. Prije nadogradnje
+zatvorite aplikacije koje koriste plugin. Ne instalira standalone program
+ni prečace na radnu površinu ili u Start izbornik.
+Na odredišnom računalu nisu potrebni Visual Studio, dodatni runtime download
+ni internetska veza.
+
+Za uklanjanje otvorite **Windows Settings → Apps → Installed apps → RaBASS →
+Uninstall**. Korisnički preseti u AppData mapi ostaju sačuvani.
+Dokumentacija i licence nalaze se u
+`C:\Program Files\Independent Audio\RaBASS`.
 
 ## User presets i novi bass zvukovi
 
@@ -115,11 +127,17 @@ Potrebni su **Desktop development with C++**, Windows SDK,
 1. Klonirajte repozitorij, primjerice u `C:\Dev\RaBASS`.
 2. Pokrenite `Build-Windows.cmd`: automatski pronalazi najnoviji VS s x64
    C++ alatima preko vswhere, koristi Ninja i pokreće testove.
-3. Za prijenosni paket pokrenite:
+3. Za izradu instalera instalirajte **Inno Setup 6.7.4** s
+   https://jrsoftware.org/isdl.php, zatim pokrenite:
 
 ```powershell
-powershell -NoProfile -File Package-VST3.ps1 -SkipBuild
+.\Build-Installer.cmd -SkipBuild
 ```
+
+Bez `-SkipBuild` naredba prvo gradi VST3 i pokreće testove.
+Za prilagođenu lokaciju Inno compilera koristite
+`Installer/Build-Installer.ps1 -IsccPath "C:\putanja\ISCC.exe"`.
+Build koristi samo JUCE format `VST3`; standalone cilj nije uključen.
 
 Alternativno otvorite mapu u VS 2026, odaberite CMake preset `windows-x64`
 i cilj `RaBASS_VST3`. Koristite x64 toolchain.
@@ -127,7 +145,7 @@ JUCE 8.0.6 fiksiran je na commit `51a8a6d7aeae7326956d747737ccf1575e61e209`.
 MSVC runtime statički je uključen u plugin.
 
 VST3 izlaz: `build/windows-x64/RaBASS_artefacts/Release/VST3/RaBASS.vst3`.
-ZIP i izvorne arhive: `build/packages`.
+Setup.exe, izvorne arhive, manifest i SHA256 provjere: `build/packages`.
 
 ## Stariji projekti i provjere
 
@@ -144,8 +162,12 @@ Provjeravaju i da su sve kontrole unutar prozora te da se međusobno ne
 preklapaju i da ih oznake ne zaklanjaju.
 Testovi User Presets provjeravaju spremanje, ponovno učitavanje, zamjenu,
 rad u novoj instanci, DAW recall, neispravne datoteke i odjeljke izbornika.
-Windows workflow stvara i provjerava VST3 ZIP i pripadajuće izvore.
-Ne preuzima Inno Setup i ne izrađuje instalacijski EXE.
+Windows workflow koristi fiksiranu verziju Inno Setup 6.7.4, provjerava
+SHA256 compilera i izrađuje instalacijski EXE. Na zasebnom Windows runneru
+provjerava čistu instalaciju, hash svake instalirane VST3 datoteke, ponovnu
+instalaciju, nadogradnju ručno kopiranog plugina, zapis u Installed apps,
+izostanak standalone aplikacije, deinstalaciju i očuvanje korisničkih preseta.
+Instalacijski smoke testovi namijenjeni su samo tom privremenom CI runneru.
 
 DSP testovi bez JUCE-a:
 
@@ -163,5 +185,5 @@ korisnikovom Windows računalu: scan, playback, automation i save/reopen.
 Izvorni RaBASS kod: **CC0-1.0**; vidi [LICENSE](LICENSE).
 Kombinirani JUCE plugin koristi JUCE-ovu **AGPLv3** opciju i pripadajuće
 licence ovisnosti. CC0 ne mijenja JUCE-ove uvjete. Izvori RaBASS-a i JUCE-a
-isporučuju se uz VST3 ZIP. Zatvorena distribucija kombiniranog plugina
+isporučuju se uz Windows instaler. Zatvorena distribucija kombiniranog plugina
 zahtijeva odgovarajuću komercijalnu JUCE licencu.

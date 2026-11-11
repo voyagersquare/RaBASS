@@ -1,4 +1,4 @@
-RaBASS 0.3.6 UI Preview 07
+RaBASS 0.3.7 Windows VST3 Installer
 Original RaBASS code: CC0-1.0; see LICENSE.
 The combined JUCE-based plugin uses JUCE's AGPLv3 open-source option.
 CC0 does not replace the licence terms of JUCE or its dependencies.
@@ -10,4 +10,4 @@ The VST3 SDK retains the Steinberg notices included in that tree.
 VST is a trademark of Steinberg Media Technologies GmbH.
 
 RaBASS uses no third-party sound recordings or sample libraries.
-Corresponding RaBASS and JUCE source archives accompany the portable VST3 ZIP.
+Corresponding RaBASS and JUCE source archives accompany the Windows VST3 installer.

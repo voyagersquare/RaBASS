@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(RaBASS VERSION 0.3.6 LANGUAGES C CXX)
+project(RaBASS VERSION 0.3.7 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(RABASS_DSP_ONLY "Build portable DSP tests without JUCE" OFF)
